@@ -1,3 +1,6 @@
+# Dependencies
+node_modules/
+
 # env files (keep template, ignore actual secrets)
 .env
 .env.local
