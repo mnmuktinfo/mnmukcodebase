@@ -7,7 +7,7 @@ import { AuthProvider } from "./userApp/features/auth/context/UserContext";
 import { CartProvider } from "./userApp/features/cart/context/CartContext";
 import { WishlistProvider } from "./userApp/features/wishList/context/WishlistContext";
 import { TaruvedaCartProvider } from "./userApp/context/TaruvedaCartContext";
-import { OrderProvider } from "./userApp/features/orders/context/Ordercontext";
+import { OrderProvider } from "./userApp/features/orders/context/OrderContext";
 
 const App = () => {
   // (function () {
