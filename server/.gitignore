@@ -1,4 +1,65 @@
+# Dependencies
 node_modules/
+.pnp
+.pnp.js
+
+# Environment variables (real secrets on the server — never commit)
 .env
-.DS_Store
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+
+# but keep a template for teammates
+!.env.example
+
+# Logs
+logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build output
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor/IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+
+# Runtime / process
+*.pid
+*.seed
+*.pid.lock
+
+# Optional: uploaded files, caches
+uploads/
+tmp/
+.cache/
+
+# Deployment
+.vercel
+.netlify
+
+# Certificates / keys (if ever placed in the repo by mistake)
+*.pem
+*.key
+*.p12
+credentials.json
+serviceAccountKey.json
