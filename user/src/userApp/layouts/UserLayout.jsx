@@ -8,6 +8,8 @@ import UnverifiedEmailPopup from "../features/auth/pages/UnverifiedEmailPopup";
 import WhatsAppButton from "../../shared/components/WhatsAppButton";
 import NewsletterPopup from "../components/pop-up/NewsletterPopup";
 import SalesNotification from "../components/pop-up/SalesNotification";
+// 1. Import the CookieConsent component (adjust the path to match your folder structure)
+import CookieConsent from "../components/pop-up/CookieConsent";
 
 const UserLayout = () => {
   const location = useLocation();
@@ -24,6 +26,7 @@ const UserLayout = () => {
       <header className="fixed top-0 left-0 right-0 z-[101] bg-white w-full ">
         <UserNavbar />
       </header>
+
       {/* ── MAIN CONTENT ── */}
       <main
         className={`
@@ -37,20 +40,28 @@ const UserLayout = () => {
           <Outlet />
         </div>
       </main>
+
+      {/* ── GLOBAL POPUPS ── */}
       <NewsletterPopup />
       <SalesNotification />
+
       {/* ── UNVERIFIED EMAIL POPUP ── */}
       <div className="z-[102]">
         <UnverifiedEmailPopup />
       </div>
-      <WhatsAppButton /> {/* ── FOOTER ── */}
+      <WhatsAppButton />
+
+      {/* ── FOOTER ── */}
       <div className="relative z-[100]">
         <Footer className="md:pb-0 pb-[70px]" />
       </div>
+
       {/* ── BOTTOM MOBILE NAVBAR ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-100 md:hidden  bg-white">
+      <div className="fixed bottom-0 left-0 right-0 z-[100] md:hidden bg-white">
         <BottomNavbar />
       </div>
+      {/* 2. Add the Cookie Consent here */}
+      <CookieConsent />
     </div>
   );
 };

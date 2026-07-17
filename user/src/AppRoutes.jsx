@@ -12,6 +12,7 @@ import UserLayout from "./userApp/layouts/UserLayout";
 import LoadingScreen from "./userApp/components/loading/LoadingScreen";
 import NotFoundPage from "./userApp/pages/NotFoundPage";
 import ErrorBoundary from "./shared/components/ErrorBoundary";
+import CookiePolicy from "./userApp/pages/CookiePolicy";
 
 /* ─── Code-split Lazy Imports ────────────────────────────────────────────── */
 
@@ -235,7 +236,7 @@ const AppRoutes = () => {
           path="/our-story"
           element={<Navigate to="/about-us" replace />}
         />
-
+        <Route path="/pages/cookie-policy" element={<CookiePolicy />} />
         {/* ─── 5. PUBLIC STOREFRONT (UserLayout + Navbar/Footer) ──────── */}
         <Route element={<UserLayout />}>
           {/* Home */}

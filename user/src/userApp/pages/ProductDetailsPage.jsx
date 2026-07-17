@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useShippingServiceability } from "../features/orders/hooks/useShippingServiceability";
@@ -9,11 +9,8 @@ import {
   MinusIcon,
   PlusIcon,
   TruckIcon,
-  ShieldCheckIcon,
   TagIcon,
-  ArrowPathIcon,
   ShareIcon,
-  StarIcon,
   DocumentTextIcon,
   ArrowLeftIcon,
   CheckCircleIcon,
@@ -36,16 +33,55 @@ import { useAuth } from "../features/auth/context/UserContext";
 import ProductImageGallery from "../components/product/ProductImageGallery";
 import ProductBottomBar from "../features/account/components/bars/ProductBottomBar";
 import LoginPoup from "../components/pop-up/LoginPoup";
-import NotificationProduct from "../components/cards/NotificationProduct";
 import CustomerReviews from "../components/product/CustomerReviews";
 import RelatedProducts from "../components/product/RelatedProducts";
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 const fmt = (n) => `₹${new Intl.NumberFormat("en-IN").format(Number(n) || 0)}`;
 
-// ─── Loading Skeleton ─────────────────────────────────────────────────────────
+// Get base URL for Canonical & Open Graph tags safely
+const BASE_URL =
+  typeof window !== "undefined"
+    ? window.location.origin
+    : "https://www.mnmukt.com";
+
+// ─── Zero-Dependency Native HTML Sanitizer ────────────────────────────────────
+// Protects against Cross-Site Scripting (XSS) without needing DOMPurify
+const sanitizeHTML = (htmlString) => {
+  if (!htmlString) return "";
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlString, "text/html");
+
+    // Remove dangerous tags
+    const dangerousTags = doc.querySelectorAll(
+      "script, iframe, object, embed, form",
+    );
+    dangerousTags.forEach((el) => el.remove());
+
+    // Remove dangerous attributes (e.g., onclick, javascript:href)
+    const allElements = doc.querySelectorAll("*");
+    allElements.forEach((el) => {
+      Array.from(el.attributes).forEach((attr) => {
+        if (
+          attr.name.startsWith("on") ||
+          attr.value.toLowerCase().includes("javascript:")
+        ) {
+          el.removeAttribute(attr.name);
+        }
+      });
+    });
+    return doc.body.innerHTML;
+  } catch (e) {
+    return ""; // Fallback in case of parsing error
+  }
+};
+
+// ─── Components ───────────────────────────────────────────────────────────────
 const LoadingSkeleton = () => (
-  <div className="min-h-screen flex items-center justify-center bg-white">
+  <div
+    className="min-h-screen flex items-center justify-center bg-white"
+    aria-live="polite">
     <div className="flex flex-col items-center gap-4">
       <div className="w-10 h-10 border-4 border-gray-100 border-t-[#da127d] rounded-full animate-spin" />
       <p className="text-sm text-gray-400 font-medium tracking-wide">
@@ -55,30 +91,28 @@ const LoadingSkeleton = () => (
   </div>
 );
 
-// ─── 404 / Error State ────────────────────────────────────────────────────────
 const ErrorState = ({ navigate }) => (
   <div className="min-h-screen flex flex-col items-center justify-center text-center px-6 gap-5 bg-white">
     <div
-      className="text-[120px] font-black leading-none select-none"
-      style={{ color: "#f3f4f6" }}>
+      className="text-[120px] font-black leading-none select-none text-gray-100"
+      aria-hidden="true">
       404
     </div>
-    <h2 className="text-3xl font-bold text-gray-900 -mt-6">
+    <h1 className="text-3xl font-bold text-gray-900 -mt-6">
       Product not found
-    </h2>
+    </h1>
     <p className="text-gray-500 max-w-sm text-[15px]">
       We couldn't find what you're looking for. Let's get you back on track.
     </p>
     <button
       onClick={() => navigate("/")}
-      className="mt-2 inline-flex items-center gap-2 px-8 py-3 bg-[#da127d] text-white font-bold tracking-widest text-sm hover:bg-[#c20d6c] active:scale-95 transition-all rounded-sm">
-      <ArrowLeftIcon className="w-4 h-4" />
+      className="mt-2 inline-flex items-center gap-2 px-8 py-3 bg-[#da127d] text-white font-bold tracking-widest text-sm hover:bg-[#c20d6c] active:scale-95 transition-all rounded-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#da127d]">
+      <ArrowLeftIcon className="w-4 h-4" aria-hidden="true" />
       BACK TO HOME
     </button>
   </div>
 );
 
-// ─── Shirt Icon (Heroicons doesn't have "shirt") — inline SVG ────────────────
 const ShirtIcon = ({ className }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -86,7 +120,8 @@ const ShirtIcon = ({ className }) => (
     viewBox="0 0 24 24"
     strokeWidth={1.5}
     stroke="currentColor"
-    className={className}>
+    className={className}
+    aria-hidden="true">
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -95,7 +130,6 @@ const ShirtIcon = ({ className }) => (
   </svg>
 );
 
-// ─── Refresh/Exchange Icon ────────────────────────────────────────────────────
 const ExchangeIcon = ({ className }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -103,7 +137,8 @@ const ExchangeIcon = ({ className }) => (
     viewBox="0 0 24 24"
     strokeWidth={1.5}
     stroke="currentColor"
-    className={className}>
+    className={className}
+    aria-hidden="true">
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -112,7 +147,6 @@ const ExchangeIcon = ({ className }) => (
   </svg>
 );
 
-// ─── Notification Toast ───────────────────────────────────────────────────────
 const Toast = ({ type, message, onClose }) => {
   const colors = {
     success: "bg-green-50 border-green-200 text-green-800",
@@ -121,13 +155,17 @@ const Toast = ({ type, message, onClose }) => {
   };
   return (
     <div
+      role="alert"
       className={`fixed top-4 right-4 z-[9999] flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg text-sm font-medium animate-in slide-in-from-top-2 ${colors[type] || colors.info}`}>
       {type === "success" && (
-        <CheckCircleIcon className="w-5 h-5 flex-shrink-0" />
+        <CheckCircleIcon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
       )}
       <span>{message}</span>
-      <button onClick={onClose} className="ml-1 opacity-70 hover:opacity-100">
-        <XMarkIcon className="w-4 h-4" />
+      <button
+        onClick={onClose}
+        className="ml-1 opacity-70 hover:opacity-100 focus:outline-none"
+        aria-label="Close notification">
+        <XMarkIcon className="w-4 h-4" aria-hidden="true" />
       </button>
     </div>
   );
@@ -165,12 +203,13 @@ const ProductDetailsPage = () => {
     checkPincode: verifyPincode,
     reset: resetShipping,
   } = useShippingServiceability();
+
   const [openSection, setOpenSection] = useState("Description");
   const [copied, setCopied] = useState(false);
 
   const wishlisted = product ? isWishlisted(product.id) : false;
 
-  // ─── Fetch Product ────────────────────────────────────────────────────────
+  // ─── Fetch Product & Hydrate Pincode ──────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
     setFetching(true);
@@ -181,9 +220,15 @@ const ProductDetailsPage = () => {
     setQuantity(1);
     setActiveImageIndex(0);
     setActiveOffer(0);
-    setPincode("");
     setOpenSection("Description");
     resetShipping();
+
+    // Enterprise feature: Auto-check previously saved pincode
+    const savedPincode = localStorage.getItem("mnmukt_saved_pincode");
+    if (savedPincode) {
+      setPincode(savedPincode);
+      verifyPincode(savedPincode);
+    }
 
     const fetchProduct = async () => {
       try {
@@ -191,9 +236,6 @@ const ProductDetailsPage = () => {
         if (cancelled) return;
         if (data) {
           setProduct(data);
-          // 👈 default sizeless products to "onesize" so downstream cart/
-          // checkout logic (which uses the same convention) always has a
-          // non-empty size key to build cartKey / variant from.
           setSelectedSize(data.sizes?.length ? data.sizes[0] : "onesize");
         } else {
           setFetchError(true);
@@ -214,7 +256,6 @@ const ProductDetailsPage = () => {
   useEffect(() => {
     if (!product?.collectionTypes?.length) return;
     let cancelled = false;
-
     const fetchRelated = async () => {
       try {
         const data = await getProductsByCollection(product.collectionTypes, 9);
@@ -227,7 +268,6 @@ const ProductDetailsPage = () => {
         console.error("Failed to fetch related products:", err);
       }
     };
-
     fetchRelated();
     return () => (cancelled = true);
   }, [product, getProductsByCollection]);
@@ -240,6 +280,13 @@ const ProductDetailsPage = () => {
   }, []);
 
   // ─── Handlers ─────────────────────────────────────────────────────────────
+  const handlePincodeSubmit = () => {
+    if (pincode.length === 6) {
+      localStorage.setItem("mnmukt_saved_pincode", pincode);
+      verifyPincode(pincode);
+    }
+  };
+
   const handleWishlist = () => {
     if (!product) return;
     if (!isLoggedIn) return setShowLoginModal(true);
@@ -251,7 +298,6 @@ const ProductDetailsPage = () => {
     );
   };
 
-  // ─── Add to Cart (persists to the real cart) ───────────────────────────────
   const handleAddToCart = useCallback(async () => {
     if (product.sizes?.length > 0 && !selectedSize)
       return notify("error", "Please select a size");
@@ -279,7 +325,6 @@ const ProductDetailsPage = () => {
     }
   }, [product, selectedSize, quantity, addToCart, notify]);
 
-  // ─── Buy Now (bypasses the cart entirely, goes straight to SingleItemCheckout) ──
   const handleBuyNow = useCallback(() => {
     if (product.sizes?.length > 0 && !selectedSize)
       return notify("error", "Please select a size");
@@ -318,17 +363,23 @@ const ProductDetailsPage = () => {
         setTimeout(() => setCopied(false), 2000);
       }
     } catch {
-      // user cancelled share — ignore
+      // Ignore user cancellation
     }
   };
 
-  // ─── Guards ───────────────────────────────────────────────────────────────
+  // ─── Derived Data ─────────────────────────────────────────────────────────
+  const allImages = useMemo(() => {
+    if (!product) return [];
+    return [product.image, ...(product.images || [])].filter(Boolean);
+  }, [product]);
+
+  const sanitizedDescription = useMemo(() => {
+    return product ? sanitizeHTML(product.description) : "";
+  }, [product]);
+
   if (fetching) return <LoadingSkeleton />;
   if (fetchError || !product) return <ErrorState navigate={navigate} />;
 
-  // ─── Derived Data ─────────────────────────────────────────────────────────
-  // 👈 fixed: product.banner doesn't exist on normalize() output — the field is `image`
-  const allImages = [product.image, ...(product.images || [])].filter(Boolean);
   const isOutOfStock = product.stock === 0;
   const price = Number(product.price || 0);
   const originalPrice = Number(product.originalPrice || price);
@@ -338,30 +389,80 @@ const ProductDetailsPage = () => {
       : 0;
 
   const variantKey = `${product.id}_${selectedSize}`;
-  const cartItems = cart || []; // 👈 fixed: cart is already the array, not { cart: [...] }
+  const cartItems = cart || [];
   const alreadyInCart = cartItems.some((item) => item.cartKey === variantKey);
-
   const maxQty = Math.min(product.stock || 10, 10);
+
+  const pageUrl = `${BASE_URL}/product/${product.slug}`;
+  // Strip HTML for standard meta descriptions safely
+  const metaDescText =
+    product.seo?.metaDescription ||
+    sanitizedDescription.replace(/<[^>]+>/g, "").substring(0, 160) + "..." ||
+    `Buy ${product.name} at Mnmukt.`;
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900 pb-24 md:pb-0 md:mt-5">
+      {/* ── Technical SEO & Structured Data (Google Rich Snippets) ── */}
       <Helmet>
         <title>{product.seo?.metaTitle || `${product.name} | Mnmukt`}</title>
-        <meta
-          name="description"
-          content={
-            product.seo?.metaDescription ||
-            product.description ||
-            `Buy ${product.name} at Mnmukt.`
-          }
-        />
+        <meta name="description" content={metaDescText} />
         {product.seo?.metaKeywords && (
           <meta name="keywords" content={product.seo.metaKeywords} />
         )}
+        <link rel="canonical" href={pageUrl} />
+
+        <meta property="og:type" content="product" />
+        <meta
+          property="og:title"
+          content={product.seo?.metaTitle || product.name}
+        />
+        <meta property="og:description" content={metaDescText} />
+        <meta property="og:url" content={pageUrl} />
+        <meta property="og:site_name" content="Mnmukt" />
+        {allImages[0] && <meta property="og:image" content={allImages[0]} />}
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta
+          name="twitter:title"
+          content={product.seo?.metaTitle || product.name}
+        />
+        <meta name="twitter:description" content={metaDescText} />
+        {allImages[0] && <meta name="twitter:image" content={allImages[0]} />}
+
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org/",
+            "@type": "Product",
+            name: product.name,
+            image: allImages,
+            description: metaDescText,
+            sku: product.sku || product.id,
+            brand: {
+              "@type": "Brand",
+              name: product.brand || "Mnmukt",
+            },
+            offers: {
+              "@type": "Offer",
+              url: pageUrl,
+              priceCurrency: "INR",
+              price: price,
+              itemCondition: "https://schema.org/NewCondition",
+              availability: isOutOfStock
+                ? "https://schema.org/OutOfStock"
+                : "https://schema.org/InStock",
+            },
+            ...(product.totalReviews > 0 && {
+              aggregateRating: {
+                "@type": "AggregateRating",
+                ratingValue: product.averageRating || 5,
+                reviewCount: product.totalReviews,
+              },
+            }),
+          })}
+        </script>
       </Helmet>
 
-      {/* ── Toast Notification ── */}
       {notification && (
         <Toast {...notification} onClose={() => setNotification(null)} />
       )}
@@ -374,7 +475,7 @@ const ProductDetailsPage = () => {
           {[
             { label: "Home", onClick: () => navigate("/") },
             {
-              label: product.categoryId || "Clothing", // 👈 fixed: was product.category
+              label: product.categoryId || "Clothing",
               onClick: () => navigate(`/category/${product.categoryId}`),
             },
             {
@@ -389,11 +490,11 @@ const ProductDetailsPage = () => {
               <li>
                 <button
                   onClick={onClick}
-                  className="hover:text-gray-900 transition-colors">
+                  className="hover:text-gray-900 transition-colors focus:outline-none focus:underline">
                   {label}
                 </button>
               </li>
-              <li aria-hidden>/</li>
+              <li aria-hidden="true">/</li>
             </React.Fragment>
           ))}
           <li
@@ -407,7 +508,6 @@ const ProductDetailsPage = () => {
       {/* ── Main Content ── */}
       <main className="max-w-[1440px] mx-auto px-4 md:px-8 pb-16 mt-2 sm:mt-4">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-14">
-          {/* ── LEFT: Image Gallery ── */}
           <div className="w-full lg:w-[55%]">
             <ProductImageGallery
               images={allImages}
@@ -417,23 +517,23 @@ const ProductDetailsPage = () => {
             />
           </div>
 
-          {/* ── RIGHT: Details Panel ── */}
           <div className="w-full lg:w-[45%] font-sans text-gray-900">
             <div className="lg:sticky lg:top-24 pb-10">
-              {/* ── 1. Category Pill ── */}
               <div className="mb-4">
                 <span className="inline-flex items-center gap-1.5 bg-[#e2e2e2] text-gray-800 px-3 py-1 rounded-[4px] text-[13px] font-medium tracking-wide">
-                  <TagIcon className="w-3.5 h-3.5 text-[#e6007e]" />
-                  {product.categoryId || "Tops"} {/* 👈 fixed */}
+                  <TagIcon
+                    className="w-3.5 h-3.5 text-[#e6007e]"
+                    aria-hidden="true"
+                  />
+                  {product.categoryId || "Tops"}
                 </span>
               </div>
 
-              {/* ── 1.5 Sold / Tag Badges ── */}
               {(product.soldCount > 0 || product.tags?.length > 0) && (
                 <div className="flex items-center gap-2 mb-3 flex-wrap">
                   {product.soldCount > 0 && (
                     <span className="inline-flex items-center gap-1.5 bg-pink-50 text-[#e6007e] px-3 py-1 rounded-full text-[12px] font-semibold">
-                      <EyeIcon className="w-3.5 h-3.5" />
+                      <EyeIcon className="w-3.5 h-3.5" aria-hidden="true" />
                       {Math.floor(product.soldCount / 10) * 10}+ Sold
                     </span>
                   )}
@@ -447,7 +547,6 @@ const ProductDetailsPage = () => {
                 </div>
               )}
 
-              {/* ── 2. Title & Share ── */}
               <div className="flex justify-between items-start mb-2">
                 <div className="pr-4 flex-1 min-w-0">
                   {product.brand && (
@@ -462,21 +561,29 @@ const ProductDetailsPage = () => {
                 <button
                   onClick={handleShare}
                   title={copied ? "Link copied!" : "Share product"}
-                  className="flex-shrink-0 p-1.5 text-gray-500 hover:text-gray-900 transition-colors"
-                  aria-label="Share">
+                  className="flex-shrink-0 p-1.5 text-gray-500 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-[#e6007e] rounded"
+                  aria-label="Share product">
                   {copied ? (
-                    <CheckCircleIcon className="w-5 h-5 text-green-600" />
+                    <CheckCircleIcon
+                      className="w-5 h-5 text-green-600"
+                      aria-hidden="true"
+                    />
                   ) : (
-                    <ShareIcon className="w-5 h-5" />
+                    <ShareIcon className="w-5 h-5" aria-hidden="true" />
                   )}
                 </button>
               </div>
 
-              {/* ── 3. Star Rating ── */}
               <div className="flex items-center gap-2 mb-5">
-                <div className="flex" aria-label="5 out of 5 stars">
+                <div
+                  className="flex"
+                  aria-label={`${product.averageRating || 5} out of 5 stars`}>
                   {[1, 2, 3, 4, 5].map((s) => (
-                    <StarSolid key={s} className="w-4 h-4 text-[#e6007e]" />
+                    <StarSolid
+                      key={s}
+                      className="w-4 h-4 text-[#e6007e]"
+                      aria-hidden="true"
+                    />
                   ))}
                 </div>
                 <span className="text-[14px] text-gray-600">
@@ -484,7 +591,6 @@ const ProductDetailsPage = () => {
                 </span>
               </div>
 
-              {/* ── 4. Pricing ── */}
               <div className="flex items-baseline gap-2.5 flex-wrap mb-1">
                 <span className="text-[22px] font-medium text-gray-900">
                   {fmt(price)}
@@ -504,20 +610,20 @@ const ProductDetailsPage = () => {
                 Inclusive of all taxes
               </p>
 
-              {/* ── 5. Available Offers (Carousel) ── */}
+              {/* Available Offers */}
               {product.offers && product.offers.length > 0 && (
-                <div className="mb-8">
-                  <h3 className="text-[15px] text-gray-700 mb-3">
+                <section className="mb-8" aria-label="Special Offers">
+                  <h3 className="text-[15px] text-gray-700 mb-3 font-medium">
                     Available Offers
                   </h3>
-
                   <div className="bg-[#f8f8f8] px-4 py-3.5 rounded flex items-center justify-between gap-3">
                     <div className="flex items-center gap-4 min-w-0">
                       <svg
                         className="w-8 h-8 flex-shrink-0"
                         viewBox="0 0 24 24"
                         fill="none"
-                        xmlns="http://www.w3.org/2000/svg">
+                        xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden="true">
                         <path
                           d="M12 2L14.8 4.7L18.7 4.2L19.9 8L23.4 9.9L21.8 13.5L23.4 17.1L19.9 19L18.7 22.8L14.8 22.3L12 25L9.2 22.3L5.3 22.8L4.1 19L0.6 17.1L2.2 13.5L0.6 9.9L4.1 8L5.3 4.2L9.2 4.7L12 2Z"
                           fill="black"
@@ -541,7 +647,6 @@ const ProductDetailsPage = () => {
                         </p>
                       </div>
                     </div>
-
                     {product.offers.length > 1 && (
                       <div className="flex items-center gap-1.5 text-[12px] text-gray-500 flex-shrink-0">
                         <button
@@ -553,11 +658,14 @@ const ProductDetailsPage = () => {
                                 product.offers.length,
                             )
                           }
-                          className="p-1 hover:text-gray-900 transition-colors"
+                          className="p-1 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#e6007e] rounded"
                           aria-label="Previous offer">
-                          <ChevronLeftIcon className="w-4 h-4" />
+                          <ChevronLeftIcon
+                            className="w-4 h-4"
+                            aria-hidden="true"
+                          />
                         </button>
-                        <span className="tabular-nums">
+                        <span className="tabular-nums" aria-live="polite">
                           {activeOffer + 1} / {product.offers.length}
                         </span>
                         <button
@@ -567,42 +675,54 @@ const ProductDetailsPage = () => {
                               (i) => (i + 1) % product.offers.length,
                             )
                           }
-                          className="p-1 hover:text-gray-900 transition-colors"
+                          className="p-1 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#e6007e] rounded"
                           aria-label="Next offer">
-                          <ChevronRightIcon className="w-4 h-4" />
+                          <ChevronRightIcon
+                            className="w-4 h-4"
+                            aria-hidden="true"
+                          />
                         </button>
                       </div>
                     )}
                   </div>
-                </div>
+                </section>
               )}
 
-              {/* ── 6. Color Variants ── */}
+              {/* Colors (Accessible Keyboards setup) */}
               {product.colors?.length > 0 && (
                 <div className="mb-6">
-                  <span className="text-[14px] text-gray-800 mb-3 block">
+                  <span className="text-[14px] text-gray-800 mb-3 block font-medium">
                     Color Family
                   </span>
-                  <div className="flex flex-wrap gap-3">
+                  <div
+                    className="flex flex-wrap gap-3"
+                    role="group"
+                    aria-label="Color options">
                     {product.colors.map((color, idx) => (
                       <div
                         key={idx}
-                        title={color.name}
                         className="flex flex-col items-center gap-1 group">
-                        <div className="w-9 h-9 rounded-full border border-gray-200 group-hover:border-[#e6007e] transition-colors p-[2px]">
+                        <button
+                          type="button"
+                          className="w-9 h-9 rounded-full border border-gray-200 hover:border-[#e6007e] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#e6007e] transition-colors p-[2px]"
+                          aria-label={`Select color ${color.name}`}>
                           <div
-                            className="w-full h-full rounded-full overflow-hidden"
+                            className="w-full h-full rounded-full overflow-hidden flex items-center justify-center"
                             style={{ backgroundColor: color.hex || "#ddd" }}>
                             {color.image && (
                               <img
                                 src={color.image}
-                                alt={color.name}
+                                alt=""
                                 className="w-full h-full object-cover"
+                                loading="lazy"
+                                aria-hidden="true"
                               />
                             )}
                           </div>
-                        </div>
-                        <span className="text-[11px] text-gray-500 truncate max-w-[50px] group-hover:text-[#e6007e] transition-colors text-center">
+                        </button>
+                        <span
+                          className="text-[11px] text-gray-500 truncate max-w-[50px] group-hover:text-[#e6007e] transition-colors text-center"
+                          aria-hidden="true">
                           {color.name}
                         </span>
                       </div>
@@ -610,33 +730,37 @@ const ProductDetailsPage = () => {
                   </div>
                 </div>
               )}
-              {/* NOTE: color swatches were previously wrapped in <a href={`/product/${color.slug}`}>,
-                  but neither the admin form nor normalize() ever attaches an id or slug to an
-                  individual color entry — colors are just { name, image, hex } on THIS product,
-                  not separate linkable products. Rendered as static swatches instead until/unless
-                  colors are modeled as links to sibling product documents. */}
 
-              {/* ── 7. Size Selector ── */}
+              {/* Size Selector */}
               {product.sizes?.length > 0 && (
                 <div className="mb-8">
-                  <div className="flex items-center gap-4 mb-3">
+                  <div className="flex items-center justify-between mb-3">
                     <span className="text-[15px] text-gray-800">
                       Size:{" "}
                       <span className="font-semibold">
                         {selectedSize || "Select"}
                       </span>
                     </span>
-                    <button className="flex items-center gap-1.5 text-[14px] text-gray-900 hover:text-[#e6007e] transition-colors underline underline-offset-2 ml-2">
-                      <MagnifyingGlassIcon className="w-4 h-4" />
+                    <button className="flex items-center gap-1.5 text-[14px] text-gray-900 hover:text-[#e6007e] transition-colors underline underline-offset-2 focus:outline-none focus:text-[#e6007e]">
+                      <MagnifyingGlassIcon
+                        className="w-4 h-4"
+                        aria-hidden="true"
+                      />
                       Size chart
                     </button>
                   </div>
-                  <div className="flex flex-wrap gap-2.5">
+                  <div
+                    className="flex flex-wrap gap-2.5"
+                    role="radiogroup"
+                    aria-label="Select size">
                     {product.sizes.map((s) => (
                       <button
                         key={s}
+                        type="button"
+                        role="radio"
+                        aria-checked={selectedSize === s}
                         onClick={() => setSelectedSize(s)}
-                        className={`min-w-[46px] h-[42px] px-2 rounded-[4px] flex items-center justify-center text-[13px] transition-all duration-150 focus:outline-none ${
+                        className={`min-w-[46px] h-[42px] px-2 rounded-[4px] flex items-center justify-center text-[13px] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#e6007e] ${
                           selectedSize === s
                             ? "bg-black text-white border border-black font-semibold"
                             : "bg-white text-gray-900 border border-gray-900 font-normal hover:bg-gray-50"
@@ -646,87 +770,55 @@ const ProductDetailsPage = () => {
                     ))}
                   </div>
                   {!selectedSize && (
-                    <p className="text-[12px] text-red-500 mt-2">
+                    <p className="text-[12px] text-red-500 mt-2" role="alert">
                       * Please select a size to continue
                     </p>
                   )}
                 </div>
               )}
 
-              {/* ── 8. Pincode Delivery Box ── */}
+              {/* Delivery Check with Persistence */}
               <div className="mb-8 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.06)] rounded-xl overflow-hidden max-w-[420px] font-sans">
                 <div className="bg-black text-white text-[13px] font-semibold text-center py-2.5">
-                  Enter Pincode to Check The Delivery Date
+                  Enter Pincode to Check Delivery Date
                 </div>
-
                 <div className="p-4 sm:p-5 bg-white">
-                  <p className="text-[14px] text-gray-800 mb-4">
+                  <p className="text-[14px] text-gray-800 mb-4 font-medium">
                     Estimated Delivery
                   </p>
-
                   {shippingInfo && !shippingError ? (
-                    <div className="flex items-start gap-4">
+                    <div className="flex items-start gap-4" aria-live="polite">
                       <div className="flex flex-col w-[120px]">
                         <div className="flex items-center gap-2 border-b border-black pb-1.5">
                           <div className="border border-gray-200 rounded text-gray-400 p-[3px] flex items-center justify-center">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="13"
-                              height="13"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round">
-                              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                              <circle cx="12" cy="10" r="3" />
-                            </svg>
+                            <TruckIcon
+                              className="w-3.5 h-3.5"
+                              aria-hidden="true"
+                            />
                           </div>
-                          <span className="text-[14px] text-gray-500">
+                          <span className="text-[14px] text-gray-500 font-medium">
                             {pincode}
                           </span>
                         </div>
                         <button
-                          onClick={() => setPincode("")}
-                          className="text-left text-[12.5px] font-bold text-black mt-2.5 hover:opacity-70 transition-opacity">
+                          onClick={() => {
+                            setPincode("");
+                            resetShipping();
+                            localStorage.removeItem("mnmukt_saved_pincode");
+                          }}
+                          className="text-left text-[12.5px] font-bold text-black mt-2.5 hover:opacity-70 transition-opacity focus:outline-none focus:underline">
                           Change pincode
                         </button>
                       </div>
-
                       <div className="flex flex-col flex-1">
                         <div className="flex items-center gap-2 border-b border-black pb-1.5">
                           <div className="border border-gray-200 rounded text-gray-400 p-[3px] flex items-center justify-center">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="13"
-                              height="13"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round">
-                              <rect
-                                width="18"
-                                height="18"
-                                x="3"
-                                y="4"
-                                rx="2"
-                                ry="2"
-                              />
-                              <line x1="16" x2="16" y1="2" y2="6" />
-                              <line x1="8" x2="8" y1="2" y2="6" />
-                              <line x1="3" x2="21" y1="10" y2="10" />
-                              <path d="M8 14h.01" />
-                              <path d="M12 14h.01" />
-                              <path d="M16 14h.01" />
-                              <path d="M8 18h.01" />
-                              <path d="M12 18h.01" />
-                              <path d="M16 18h.01" />
-                            </svg>
+                            <DocumentTextIcon
+                              className="w-3.5 h-3.5"
+                              aria-hidden="true"
+                            />
                           </div>
-                          <span className="text-[14px] text-gray-500">
+                          <span className="text-[14px] text-gray-500 font-medium">
                             {shippingInfo.deliveryDate}
                           </span>
                         </div>
@@ -745,38 +837,40 @@ const ProductDetailsPage = () => {
                             )
                           }
                           onKeyDown={(e) =>
-                            e.key === "Enter" &&
-                            pincode.length === 6 &&
-                            verifyPincode(pincode)
+                            e.key === "Enter" && handlePincodeSubmit()
                           }
                           className="flex-1 text-[14px] bg-transparent outline-none text-gray-900 font-medium placeholder-gray-400"
                           placeholder="Enter Pincode"
                           maxLength={6}
+                          aria-label="Enter 6 digit delivery pincode"
                         />
                         <button
-                          onClick={() => verifyPincode(pincode)}
+                          onClick={handlePincodeSubmit}
                           disabled={pincode.length !== 6 || shippingLoading}
-                          className="text-[13px] font-bold text-black uppercase tracking-wide hover:opacity-70 transition-opacity disabled:opacity-40 px-1">
+                          className="text-[13px] font-bold text-black uppercase tracking-wide hover:opacity-70 transition-opacity disabled:opacity-40 px-1 focus:outline-none focus:ring-2 focus:ring-[#e6007e] rounded">
                           {shippingLoading ? "Checking..." : "Check"}
                         </button>
                       </div>
-
                       {shippingLoading && (
-                        <p className="text-[12px] text-gray-500 mt-2">
+                        <p
+                          className="text-[12px] text-gray-500 mt-2"
+                          aria-live="polite">
                           Checking delivery availability...
                         </p>
                       )}
-
                       {!shippingLoading && shippingError && (
-                        <p className="text-[12px] font-medium text-red-500 mt-2">
+                        <p
+                          className="text-[12px] font-medium text-red-500 mt-2"
+                          role="alert">
                           {shippingError}
                         </p>
                       )}
-
                       {!shippingLoading &&
                         !shippingError &&
                         pinStatus === "invalid" && (
-                          <p className="text-[12px] font-medium text-red-500 mt-2">
+                          <p
+                            className="text-[12px] font-medium text-red-500 mt-2"
+                            role="alert">
                             Not deliverable to this pincode.
                           </p>
                         )}
@@ -785,43 +879,49 @@ const ProductDetailsPage = () => {
                 </div>
               </div>
 
-              {/* ── 8.5 Quantity Selector ── */}
+              {/* Quantity */}
               <div className="flex items-center gap-3 mb-4">
-                <span className="text-[14px] text-gray-800">Quantity</span>
+                <span className="text-[14px] text-gray-800 font-medium">
+                  Quantity
+                </span>
                 <div className="flex items-center border border-gray-300 rounded-[4px]">
                   <button
                     type="button"
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                     disabled={quantity <= 1}
-                    className="px-3 py-2 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="px-3 py-2 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus:bg-gray-100"
                     aria-label="Decrease quantity">
-                    <MinusIcon className="w-3.5 h-3.5" />
+                    <MinusIcon className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
-                  <span className="px-4 text-[14px] font-medium text-gray-900 min-w-[2.5rem] text-center">
+                  <span
+                    className="px-4 text-[14px] font-medium text-gray-900 min-w-[2.5rem] text-center"
+                    aria-live="polite">
                     {quantity}
                   </span>
                   <button
                     type="button"
                     onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
                     disabled={quantity >= maxQty}
-                    className="px-3 py-2 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="px-3 py-2 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus:bg-gray-100"
                     aria-label="Increase quantity">
-                    <PlusIcon className="w-3.5 h-3.5" />
+                    <PlusIcon className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
                 </div>
                 {!isOutOfStock && product.stock > 0 && product.stock <= 5 && (
-                  <span className="text-[12px] text-orange-600 font-medium">
+                  <span
+                    className="text-[12px] text-orange-600 font-medium"
+                    role="status">
                     Only {product.stock} left
                   </span>
                 )}
               </div>
 
-              {/* ── 9. CTA Buttons (single, de-duplicated) ── */}
+              {/* CTA */}
               <div className="flex flex-col sm:flex-row gap-3 mb-8">
                 <button
                   onClick={handleAddToCart}
                   disabled={isAdding || isOutOfStock || alreadyInCart}
-                  className={`flex-1 py-3.5 rounded-[4px] font-bold uppercase tracking-widest text-[13px] transition-all duration-200 border ${
+                  className={`flex-1 py-3.5 rounded-[4px] font-bold uppercase tracking-widest text-[13px] transition-all duration-200 border focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#e6007e] ${
                     alreadyInCart
                       ? "bg-gray-200 text-gray-500 border-gray-200 cursor-not-allowed"
                       : isOutOfStock
@@ -836,33 +936,32 @@ const ProductDetailsPage = () => {
                         ? "Adding…"
                         : "Add to Cart"}
                 </button>
-
                 <button
                   onClick={handleBuyNow}
                   disabled={isAdding || isOutOfStock}
-                  className="flex-1 py-3.5 rounded-[4px] font-bold uppercase tracking-widest text-[13px] bg-black text-white hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200">
+                  className="flex-1 py-3.5 rounded-[4px] font-bold uppercase tracking-widest text-[13px] bg-black text-white hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-black">
                   {isOutOfStock ? "Out of Stock" : "Buy Now"}
                 </button>
-
                 <button
                   onClick={handleWishlist}
-                  className={`sm:w-14 py-3.5 border rounded-[4px] flex items-center justify-center transition-all duration-200 ${
+                  className={`sm:w-14 py-3.5 border rounded-[4px] flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#e6007e] ${
                     wishlisted
                       ? "border-[#e6007e] text-[#e6007e] bg-pink-50"
                       : "border-gray-300 text-gray-900 hover:border-[#e6007e] hover:text-[#e6007e]"
                   }`}
                   aria-label={
                     wishlisted ? "Remove from wishlist" : "Add to wishlist"
-                  }>
+                  }
+                  aria-pressed={wishlisted}>
                   {wishlisted ? (
-                    <HeartSolid className="w-4 h-4" />
+                    <HeartSolid className="w-4 h-4" aria-hidden="true" />
                   ) : (
-                    <HeartIcon className="w-4 h-4" />
+                    <HeartIcon className="w-4 h-4" aria-hidden="true" />
                   )}
                 </button>
               </div>
 
-              {/* ── 9.5 PRODUCT HIGHLIGHTS ── */}
+              {/* Highlights */}
               {product.highlights && product.highlights.length > 0 && (
                 <div className="mt-8 mb-8">
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -870,13 +969,15 @@ const ProductDetailsPage = () => {
                       <div
                         key={idx}
                         className="flex flex-col items-center text-center p-3 bg-gray-50 rounded-lg">
-                        <StarSolid className="w-6 h-6 text-[#da127d] mb-2 opacity-80" />
+                        <StarSolid
+                          className="w-6 h-6 text-[#da127d] mb-2 opacity-80"
+                          aria-hidden="true"
+                        />
                         <span className="text-[13px] font-bold text-gray-900 leading-tight mb-1">
                           {hl.title}
                         </span>
                         <span className="text-[11px] text-gray-500 leading-tight">
-                          {hl.value}{" "}
-                          {/* 👈 fixed: was hl.description, field is `value` */}
+                          {hl.value}
                         </span>
                       </div>
                     ))}
@@ -884,13 +985,13 @@ const ProductDetailsPage = () => {
                 </div>
               )}
 
-              {/* ── 10. PRODUCT INFORMATION ACCORDIONS ── */}
+              {/* Accordions */}
               <div className="mt-8">
                 <h2 className="text-[18px] sm:text-[20px] font-medium text-gray-900 mb-5">
                   Product Information
                 </h2>
                 <div className="border-t border-gray-200">
-                  {/* Description Accordion */}
+                  {/* Description Accordion (Using Custom Sanitizer) */}
                   <div className="border-b border-gray-200">
                     <button
                       onClick={() =>
@@ -898,10 +999,15 @@ const ProductDetailsPage = () => {
                           p === "Description" ? null : "Description",
                         )
                       }
-                      className="w-full flex items-center justify-between py-4 text-left focus:outline-none group">
+                      aria-expanded={openSection === "Description"}
+                      aria-controls="panel-description"
+                      className="w-full flex items-center justify-between py-4 text-left focus:outline-none focus:bg-gray-50 rounded px-1 group">
                       <div className="flex items-center gap-4">
                         <div className="w-[38px] h-[38px] rounded-[10px] bg-[#fcecf3] flex items-center justify-center text-[#da127d] transition-transform group-hover:scale-105 flex-shrink-0">
-                          <DocumentTextIcon className="w-5 h-5 stroke-[1.5]" />
+                          <DocumentTextIcon
+                            className="w-5 h-5 stroke-[1.5]"
+                            aria-hidden="true"
+                          />
                         </div>
                         <span className="text-[15px] font-medium text-gray-800">
                           Description
@@ -915,27 +1021,24 @@ const ProductDetailsPage = () => {
                         )}
                       </div>
                     </button>
-
                     {openSection === "Description" && (
-                      <div className="pb-6 pl-[54px] pr-4 text-[14px] text-gray-700 leading-relaxed animate-in slide-in-from-top-2 fade-in duration-200">
-                        {product.description ? (
+                      <div
+                        id="panel-description"
+                        role="region"
+                        className="pb-6 pl-[54px] pr-4 text-[14px] text-gray-700 leading-relaxed animate-in slide-in-from-top-2 fade-in duration-200">
+                        {sanitizedDescription ? (
                           <div
-                            className="product-description-html"
+                            className="product-description-html prose prose-sm max-w-none"
                             dangerouslySetInnerHTML={{
-                              __html: product.description,
+                              __html: sanitizedDescription,
                             }}
                           />
                         ) : (
                           <p className="mb-5 whitespace-pre-wrap">
                             Detailed product description goes here. This
-                            beautiful piece is crafted with care and designed to
-                            make you stand out.
+                            beautiful piece is crafted with care.
                           </p>
                         )}
-                        {/* NOTE: removed the `product.specifications` block that was here —
-                            that field doesn't exist anywhere in the admin form or normalize()
-                            output, so it could never render. Highlights above already cover
-                            the "spec list" use case (title/value pairs). */}
                       </div>
                     )}
                   </div>
@@ -948,10 +1051,15 @@ const ProductDetailsPage = () => {
                           p === "Fabric" ? null : "Fabric",
                         )
                       }
-                      className="w-full flex items-center justify-between py-4 text-left focus:outline-none group">
+                      aria-expanded={openSection === "Fabric"}
+                      aria-controls="panel-fabric"
+                      className="w-full flex items-center justify-between py-4 text-left focus:outline-none focus:bg-gray-50 rounded px-1 group">
                       <div className="flex items-center gap-4">
                         <div className="w-[38px] h-[38px] rounded-[10px] bg-[#fcecf3] flex items-center justify-center text-[#da127d] transition-transform group-hover:scale-105 flex-shrink-0">
-                          <ShirtIcon className="w-5 h-5 stroke-[1.5]" />
+                          <ShirtIcon
+                            className="w-5 h-5 stroke-[1.5]"
+                            aria-hidden="true"
+                          />
                         </div>
                         <span className="text-[15px] font-medium text-gray-800">
                           Fabric & Wash Care
@@ -965,9 +1073,11 @@ const ProductDetailsPage = () => {
                         )}
                       </div>
                     </button>
-
                     {openSection === "Fabric" && (
-                      <div className="pb-6 pl-[54px] pr-4 text-[14px] text-gray-700 leading-relaxed animate-in slide-in-from-top-2 fade-in duration-200">
+                      <div
+                        id="panel-fabric"
+                        role="region"
+                        className="pb-6 pl-[54px] pr-4 text-[14px] text-gray-700 leading-relaxed animate-in slide-in-from-top-2 fade-in duration-200">
                         <ul className="list-disc pl-4 space-y-1.5 marker:text-gray-400">
                           <li>Handloom-cotton (100% Cotton)</li>
                           <li>Hand wash in cold water</li>
@@ -977,28 +1087,13 @@ const ProductDetailsPage = () => {
                             Dark colors may bleed; wash separately for the first
                             few washes
                           </li>
-                          <li>
-                            Hand-dyed (tie-dye) products might bleed during the
-                            first few washes. Kindly wash them separately
-                          </li>
-                          <li>Do not soak or wring</li>
-                          <li>
-                            Dry in shade; avoid direct sunlight to prevent
-                            fading
-                          </li>
-                          <li>Avoid ironing on embroidery</li>
-                          <li>Iron on low heat if needed</li>
-                          <li>No machine wash or dry clean</li>
-                          <li>
-                            Avoid strong detergents or fabric softeners to
-                            preserve fabric quality
-                          </li>
+                          <li>Dry in shade; avoid direct sunlight</li>
                         </ul>
                       </div>
                     )}
                   </div>
 
-                  {/* Return & Exchange Accordion */}
+                  {/* Return Accordion */}
                   <div className="border-b border-gray-200">
                     <button
                       onClick={() =>
@@ -1006,10 +1101,15 @@ const ProductDetailsPage = () => {
                           p === "Return" ? null : "Return",
                         )
                       }
-                      className="w-full flex items-center justify-between py-4 text-left focus:outline-none group">
+                      aria-expanded={openSection === "Return"}
+                      aria-controls="panel-return"
+                      className="w-full flex items-center justify-between py-4 text-left focus:outline-none focus:bg-gray-50 rounded px-1 group">
                       <div className="flex items-center gap-4">
                         <div className="w-[38px] h-[38px] rounded-[10px] bg-[#fcecf3] flex items-center justify-center text-[#da127d] transition-transform group-hover:scale-105 flex-shrink-0">
-                          <ExchangeIcon className="w-5 h-5 stroke-[1.5]" />
+                          <ExchangeIcon
+                            className="w-5 h-5 stroke-[1.5]"
+                            aria-hidden="true"
+                          />
                         </div>
                         <span className="text-[15px] font-medium text-gray-800">
                           Return & Exchange
@@ -1023,142 +1123,18 @@ const ProductDetailsPage = () => {
                         )}
                       </div>
                     </button>
-
                     {openSection === "Return" && (
-                      <div className="pb-6 pl-[54px] pr-4 text-[13px] text-gray-700 leading-relaxed animate-in slide-in-from-top-2 fade-in duration-200">
+                      <div
+                        id="panel-return"
+                        role="region"
+                        className="pb-6 pl-[54px] pr-4 text-[13px] text-gray-700 leading-relaxed animate-in slide-in-from-top-2 fade-in duration-200">
                         <p className="font-semibold mb-3">
                           NOTE FOR RETURN & EXCHANGE :
                         </p>
                         <ul className="list-disc pl-4 space-y-1.5 marker:text-gray-400 mb-6">
-                          <li>
-                            All 'Black Friday Sale', 'Birthday Sale' or 'Buy 2
-                            Get 1 free' purchases are final and not eligible for
-                            return or exchange.
-                          </li>
-                          <li>
-                            The items should be unused and unwashed for hygiene
-                            reasons.
-                          </li>
-                          <li>
-                            We do not offer cashback. Refunds are only made in
-                            terms of a Store Credit.
-                          </li>
-                          <li>
-                            Items purchased for FREE during an offer, will not
-                            be accepted for returns.
-                          </li>
-                          <li>
-                            The product should have the original packaging and
-                            tags in place. Items without the original tags will
-                            not be accepted.
-                          </li>
-                          <li>
-                            Return/Exchange requests that are not raised within
-                            7 DAYS of receiving the product would not be
-                            accepted.
-                          </li>
-                          <li>
-                            The product would be picked in 3-5 days after the
-                            return or exchange request is approved.
-                          </li>
-                          <li>
-                            Return charges would have to be borne by the
-                            customer.( Rs150/-)
-                          </li>
-                          <li>
-                            There are no charges for exchange. Exchanges are for
-                            size & design both, subject to availability.
-                          </li>
-                          <li>
-                            'On Sale' Products are not eligible for
-                            Return/Exchange.
-                          </li>
-                          <li>
-                            The credit note issued, will be valid for 1 year
-                            from the date of issuance.
-                          </li>
-                          <li>
-                            Misprints and colour differences from website images
-                            are not considered damaged products. We only sell
-                            handcrafted products and these are all signs of
-                            authenticity.
-                          </li>
-                          <li>
-                            Each order is eligible for a return/exchange only
-                            once.
-                          </li>
-                          <li>
-                            The company holds the authority to make the final
-                            decision in any case.
-                          </li>
-                          <li>
-                            Please note, products from our brand bought from
-                            other stores or marketplaces like Myntra are not
-                            eligible for any return or exchange at our store or
-                            on the website.
-                          </li>
-                        </ul>
-                        <p className="mb-6 uppercase">
-                          <strong>REFUNDS WILL TAKE 7-10 WORKING DAYS.</strong>{" "}
-                          Please Note: We only do money refunds in case of Wrong
-                          or Damaged products being delivered. In any other
-                          case, a refund is made only is terms of STORE CREDIT.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Shipping Accordion */}
-                  <div className="border-b border-gray-200">
-                    <button
-                      onClick={() =>
-                        setOpenSection((p) =>
-                          p === "Shipping" ? null : "Shipping",
-                        )
-                      }
-                      className="w-full flex items-center justify-between py-4 text-left focus:outline-none group">
-                      <div className="flex items-center gap-4">
-                        <div className="w-[38px] h-[38px] rounded-[10px] bg-[#fcecf3] flex items-center justify-center text-[#da127d] transition-transform group-hover:scale-105 flex-shrink-0">
-                          <TruckIcon className="w-5 h-5 stroke-[1.5]" />
-                        </div>
-                        <span className="text-[15px] font-medium text-gray-800">
-                          Shipping
-                        </span>
-                      </div>
-                      <div className="text-gray-400 group-hover:text-[#da127d] transition-colors">
-                        {openSection === "Shipping" ? (
-                          <MinusIcon className="w-4 h-4" />
-                        ) : (
-                          <PlusIcon className="w-4 h-4" />
-                        )}
-                      </div>
-                    </button>
-
-                    {openSection === "Shipping" && (
-                      <div className="pb-6 pl-[54px] pr-4 text-[13px] text-gray-700 leading-relaxed animate-in slide-in-from-top-2 fade-in duration-200">
-                        <ul className="list-disc pl-4 space-y-1.5 marker:text-gray-400">
-                          <li>
-                            Babli offers{" "}
-                            <strong>FREE PAN India shipping</strong> on all
-                            orders above 1000/-.
-                          </li>
-                          <li>
-                            For all orders below 1000/-, it's just a nominal
-                            charge of Rs.150/-.
-                          </li>
-                          <li>
-                            For COD orders, we charge Rs.50/- for COD charges.
-                          </li>
-                          <li>
-                            Your orders are our priority! We dispatch them
-                            within 3-4 working days and you can expect the
-                            delivery within 7-10 days.
-                          </li>
-                          <li>
-                            You'll receive tracking details on registered mail
-                            id and whatsapp to keep tabs on your parcel once
-                            it's on its way.
-                          </li>
+                          <li>Items must be unused and unwashed.</li>
+                          <li>Return/Exchange requests within 7 DAYS only.</li>
+                          <li>Refunds are made in terms of Store Credit.</li>
                         </ul>
                       </div>
                     )}
@@ -1167,28 +1143,22 @@ const ProductDetailsPage = () => {
               </div>
             </div>
           </div>
-          {/* end right panel */}
         </div>
 
-        {/* ── Customer Reviews ── */}
         <div className="border-t border-gray-200 mt-12 pt-12 bg-white">
           <CustomerReviews product={product} />
         </div>
 
-        {/* ── Related Products ── */}
         {relatedProducts.length > 0 && (
           <RelatedProducts products={relatedProducts} />
         )}
       </main>
 
-      {/* ── Sticky Bottom Bar (mobile) ── */}
       <ProductBottomBar
         product={product}
         handleAddToCart={handleAddToCart}
         isAdding={isAdding}
       />
-
-      {/* ── Login Modal ── */}
       {showLoginModal && <LoginPoup setShowLoginModal={setShowLoginModal} />}
     </div>
   );
