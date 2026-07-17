@@ -1,50 +1,40 @@
 'use strict';
 
 const { app } = require('./app');
-const { env } = require('./config/env');
-const { connectDB, disconnectDB } = require('./config/db');
+const { connectDB } = require('./config/db'); // adjust path to match your project
+const { env } = require('./config/env');       // adjust path to match your project
 const { logger } = require('./utils/logger');
 
-let server;
+const PORT = env.PORT || 3000;
 
-async function start() {
-  await connectDB();
+// Start HTTP server immediately — don't gate it on DB connectivity.
+// This ensures Render's port scan succeeds even if Mongo is slow/down.
+const server = app.listen(PORT, () => {
+  logger.info(`Server listening on port ${PORT}`);
+});
 
-  server = app.listen(env.PORT, () => {
-    logger.info(`Server running on port ${env.PORT} [${env.NODE_ENV}]`);
-  });
-}
+// Connect to Mongo in parallel; log clearly if it fails.
+connectDB().catch((err) => {
+  logger.error({ err: err.message }, 'Failed to connect to MongoDB on startup');
+  // If your app genuinely cannot function without the DB, uncomment:
+  // process.exit(1);
+});
 
-async function shutdown(signal) {
-  logger.info(`${signal} received — shutting down gracefully`);
-
-  try {
-    if (server) {
-      await new Promise((resolve) => server.close(resolve));
-    }
-
-    await disconnectDB();
-
-    process.exit(0);
-  } catch (err) {
-    logger.error({ err }, 'Error during shutdown');
-    process.exit(1);
-  }
-}
-
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT', () => shutdown('SIGINT'));
-
-process.on('unhandledRejection', (reason) => {
-  logger.error({ reason }, 'Unhandled promise rejection');
+// Safety nets so nothing crashes silently again
+process.on('unhandledRejection', (err) => {
+  logger.error({ err }, 'Unhandled promise rejection');
 });
 
 process.on('uncaughtException', (err) => {
-  logger.error({ err }, 'Uncaught exception — exiting');
+  logger.error({ err }, 'Uncaught exception');
   process.exit(1);
 });
 
-start().catch((err) => {
-  logger.error({ err }, 'Failed to start server');
-  process.exit(1);
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM received, shutting down gracefully');
+  server.close(() => {
+    logger.info('HTTP server closed');
+    process.exit(0);
+  });
 });

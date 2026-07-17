@@ -1,78 +1,104 @@
-import React from "react";
+// CartDrawer.jsx
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useCart } from "../../features/cart/context/CartContext";
 import { OrderPricingService } from "../../features/orders/services/core/orderPricing.service";
+import { useShippingServiceability } from "../../features/orders/hooks/useShippingServiceability";
+import { PRICING_DEFAULTS } from "../../features/orders/services/schema";
 
 import CartView from "./CartView";
 
-/**
- * CartDrawer
- * ----------
- * Slide-in side panel showing the current cart.
- * - Slides in from the right when `isOpen` is true, slides back out when false.
- * - Only renders the cart list/summary (CartView) — the old in-drawer
- *   "Address" step has been moved to its own dedicated page, so this
- *   component no longer needs to handle multiple steps.
- */
 const CartDrawer = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
-
-  // Cart items + mutation helpers (quantity update, remove) come from
-  // the shared CartContext, so this stays in sync with the rest of the app.
   const { cart, updateQuantity, remove } = useCart();
-
-  // Recalculate pricing (subtotal, discounts, etc.) on every render so
-  // the drawer always reflects the latest cart contents.
   const pricing = OrderPricingService.calculatePricing(cart);
 
-  // Runs when the user clicks "Proceed" inside CartView.
-  const handleProceedToCheckout = () => {
-    // 1. Close the drawer so it doesn't stay open behind the checkout page.
-    onClose();
+  // Same delivery-check service the checkout page uses, so a pincode
+  // marked deliverable/COD-blocked here will behave identically there.
+  const {
+    shippingInfo,
+    shippingLoading,
+    shippingError,
+    checkPincode,
+    reset: resetShipping,
+  } = useShippingServiceability();
 
-    // 2. Go to the unified checkout page, passing the cart items and a
-    //    "type" flag so checkout knows this came from the cart flow
-    //    (as opposed to a single-item "buy now" flow).
+  const [pincode, setPincode] = useState("");
+  const codCharge = PRICING_DEFAULTS?.COD_CHARGE ?? 50;
+
+  useEffect(() => {
+    if (!isOpen) return;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  // Clear the pincode check whenever the drawer closes, so reopening it
+  // later doesn't show a stale "deliverable to 400001" from last time.
+  useEffect(() => {
+    if (!isOpen) {
+      setPincode("");
+      resetShipping();
+    }
+  }, [isOpen, resetShipping]);
+
+  const handlePincodeChange = (value) => {
+    const digitsOnly = value.replace(/\D/g, "").slice(0, 6);
+    setPincode(digitsOnly);
+    if (digitsOnly.length === 6) {
+      checkPincode(digitsOnly);
+    } else {
+      resetShipping();
+    }
+  };
+
+  const handleProceedToCheckout = () => {
+    onClose();
     navigate("/checkout/buy-now", {
-      state: {
-        items: cart,
-        type: "cart",
-      },
+      state: { items: cart, type: "cart" },
     });
   };
 
   return (
     <>
-      {/* Backdrop overlay behind the drawer.
-          - Fades in/out with `opacity` based on `isOpen`.
-          - `pointer-events-none` when closed so it can't block clicks
-            on the rest of the page.
-          - Clicking it closes the drawer. */}
+      {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-[400] bg-black/50 transition-opacity duration-300 ${
+        className={`fixed inset-0 z-40 bg-black/40 backdrop-blur-[1px] transition-opacity duration-200 ${
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         onClick={onClose}
+        aria-hidden="true"
       />
 
-      {/* Drawer panel.
-          - `translate-x-full` pushes it off-screen (right side) when closed.
-          - `translate-x-0` slides it fully into view when open. */}
+      {/* Drawer panel */}
       <div
-        className={`fixed inset-y-0 right-0 z-[500] w-full max-w-md bg-white shadow-xl flex flex-col transform transition-transform duration-300 ease-in-out ${
+        role="dialog"
+        aria-modal="true"
+        aria-label="Shopping cart"
+        className={`fixed inset-y-0 right-0 z-50 w-full sm:w-[440px] bg-white shadow-[-8px_0_32px_-8px_rgba(219,39,119,0.2)] flex flex-col transform transition-transform duration-300 ease-out pb-[env(safe-area-inset-bottom)] ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}>
-        {/* Only CartView is rendered here — the address step now lives
-            on its own route, so no multi-step view is needed inside the drawer. */}
         <CartView
           cart={cart}
           pricing={pricing}
-          isLoading={false} // Checkout is no longer triggered from this drawer, so there's nothing to show a loading state for here
+          isLoading={false}
           onUpdateQuantity={updateQuantity}
           onRemove={remove}
-          onProceedToAddress={handleProceedToCheckout} // Prop name kept for CartView's existing API, but it now redirects straight to checkout
+          onProceedToAddress={handleProceedToCheckout}
           onClose={onClose}
+          pincode={pincode}
+          onPincodeChange={handlePincodeChange}
+          shippingInfo={shippingInfo}
+          shippingLoading={shippingLoading}
+          shippingError={shippingError}
+          codCharge={codCharge}
+          // Optional — wire up whenever ready; safe to leave as-is.
+          // onMoveToWishlist={moveToWishlist}
+          // onApplyCoupon={applyCoupon}
+          // appliedCoupon={pricing?.couponCode}
+          // onClearCart={clearCart}
         />
       </div>
     </>

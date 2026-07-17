@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from "react";
+// components/sections/ProductSection.jsx
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import ProductCard from "../cards/ProductCard";
 import TaruVedaProductCard from "../../features/taruveda/components/TaruVedaProductCard";
@@ -14,7 +15,6 @@ const ProductSection = ({
 }) => {
   const navigate = useNavigate();
 
-  // ✅ show only 4 products — hook runs on every render, no early return above it
   const visibleProducts = useMemo(() => {
     return products.slice(0, 4);
   }, [products]);
@@ -24,17 +24,15 @@ const ProductSection = ({
   return (
     <section
       style={{ backgroundColor: themeColor || "#ffffff" }}
-      className="max-w-[1600px] py-5 md:py-10  mx-auto px-4 sm:px-6 lg:px-10">
+      className="max-w-[1500px] w-full py-5 md:py-10 mx-auto px-4 sm:px-6 lg:px-10">
       <div>
-        {/* ── PREMIUM HEADER ── */}
-        <div className="flex flex-col items-center text-center mb-5 md:mb-10">
+        {/* ── PREMIUM HEADER (Matched with VideoSection sizes) ── */}
+        <div className="flex flex-col items-center text-center mb-6 md:mb-12">
           {title && (
-            <h2 className="flex items-center gap-2 text-[20px] md:text-[25px] font-medium text-[#1a1a1a] tracking-[0.01em] leading-tight">
+            <h2 className="flex items-center justify-center gap-2 text-[18px] sm:text-[20px] md:text-[26px] font-medium text-[#1a1a1a] tracking-[0.01em] leading-tight">
               {title}
-
-              {/* Sun only for new section */}
               <svg
-                className="w-8 h-8 md:w-10 md:h-10"
+                className="w-6 h-6 sm:w-7 sm:h-7 md:w-9 md:h-9"
                 viewBox="0 0 100 100"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg">
@@ -53,27 +51,27 @@ const ProductSection = ({
           )}
 
           {subtitle && (
-            <p className="mt-2 text-[15px] md:text-[17px] text-[#2b2a2a] font-normal tracking-[0.02em]">
+            <p className="mt-1.5 md:mt-2 text-[12px] sm:text-[13px] md:text-[14px] text-[#6b6b6b] max-w-[420px] tracking-[0.02em]">
               {subtitle}
             </p>
           )}
         </div>
 
-        {/* ── GRID ── */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-10 md:gap-x-8 md:gap-y-14">
+        {/* ── RESPONSIVE GRID ── */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-8 sm:gap-x-4 sm:gap-y-10 md:gap-x-6 md:gap-y-14">
           {loading
             ? Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="flex flex-col w-full animate-pulse">
-                  <div className="w-full aspect-4/5 bg-gray-100 mb-4" />
-                  <div className="h-3 bg-gray-200 w-3/4 mb-2 mx-auto" />
-                  <div className="h-3 bg-gray-200 w-1/2 mb-4 mx-auto" />
-                  <div className="h-4 bg-gray-200 w-1/4 mx-auto" />
+                  <div className="w-full aspect-[3/4] bg-gray-100/80 mb-3 md:mb-4 rounded-sm" />
+                  <div className="h-2.5 md:h-3 bg-gray-200/80 w-3/4 mb-2 mx-auto rounded" />
+                  <div className="h-2.5 md:h-3 bg-gray-200/80 w-1/2 mb-3 md:mb-4 mx-auto rounded" />
+                  <div className="h-3 md:h-4 bg-gray-200/80 w-1/4 mx-auto rounded" />
                 </div>
               ))
             : visibleProducts.map((product) => (
                 <div
                   key={product.id || product.sku || product.name}
-                  className="w-full">
+                  className="w-full transition-transform duration-300 md:hover:-translate-y-1">
                   {type === "taruveda" ? (
                     <TaruVedaProductCard product={product} />
                   ) : (
@@ -85,10 +83,10 @@ const ProductSection = ({
 
         {/* ── VIEW COLLECTION BUTTON ── */}
         {!loading && products.length > 3 && (
-          <div className="mt-12 flex justify-center">
+          <div className="mt-8 md:mt-12 flex justify-center">
             <button
               onClick={() => navigate("/products")}
-              className={`px-8 py-3 text-[12px] uppercase tracking-[0.18em] transition-all duration-300 ${buttonClass}`}>
+              className={`px-6 py-2.5 md:px-8 md:py-3 text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.18em] transition-all duration-300 rounded-none shadow-sm ${buttonClass}`}>
               View Collection
             </button>
           </div>

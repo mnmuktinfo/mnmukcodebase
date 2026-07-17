@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <url>
+    <loc>https://mnmukt.com/collections</loc>
+    <priority>0.98</priority>
+    <changefreq>daily</changefreq>
+  </url>
+
+  <url>
+    <loc>https://mnmukt.com/collections/new-arrivals</loc>
+    <priority>0.98</priority>
+    <changefreq>daily</changefreq>
+  </url>
+
+  <url>
+    <loc>https://mnmukt.com/collections/best-sellers</loc>
+    <priority>0.98</priority>
+    <changefreq>daily</changefreq>
+  </url>
+
+  <url>
+    <loc>https://mnmukt.com/collections/trending</loc>
+    <priority>0.96</priority>
+    <changefreq>daily</changefreq>
+  </url>
+
+  <url>
+    <loc>https://mnmukt.com/collections/summer-collection</loc>
+    <priority>0.94</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+
+  <url>
+    <loc>https://mnmukt.com/collections/sale</loc>
+    <priority>0.95</priority>
+    <changefreq>daily</changefreq>
+  </url>
+
+  <url>
+    <loc>https://mnmukt.com/collections/basics</loc>
+    <priority>0.90</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+
+  <url>
+    <loc>https://mnmukt.com/collections/kurta-sets</loc>
+    <priority>0.95</priority>
+    <changefreq>daily</changefreq>
+  </url>
+
+  <url>
+    <loc>https://mnmukt.com/collections/co-ord-sets</loc>
+    <priority>0.95</priority>
+    <changefreq>daily</changefreq>
+  </url>
+
+  <url>
+    <loc>https://mnmukt.com/collections/dresses</loc>
+    <priority>0.95</priority>
+    <changefreq>daily</changefreq>
+  </url>
+
+  <url>
+    <loc>https://mnmukt.com/collections/kurtas</loc>
+    <priority>0.92</priority>
+    <changefreq>daily</changefreq>
+  </url>
+
+  <url>
+    <loc>https://mnmukt.com/collections/sarees</loc>
+    <priority>0.90</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+
+  <url>
+    <loc>https://mnmukt.com/collections/tops</loc>
+    <priority>0.88</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+
+  <url>
+    <loc>https://mnmukt.com/collections/shirts</loc>
+    <priority>0.88</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+
+  <url>
+    <loc>https://mnmukt.com/collections/bottoms</loc>
+    <priority>0.88</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+
+  <url>
+    <loc>https://mnmukt.com/collections/ethnic-wear</loc>
+    <priority>0.90</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+
+  <url>
+    <loc>https://mnmukt.com/collections/western-wear</loc>
+    <priority>0.90</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+
+</urlset>

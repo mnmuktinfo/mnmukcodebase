@@ -25,10 +25,6 @@ import Toast from "../../components/productManage/Toast";
 
 import { productService } from "../../services/firebase/product/productService";
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-// 👈 FIXED: was formatPKR / en-PK / PKR. The rest of the system runs on INR
-// (Order schema's pricing.currency defaults to 'INR', AddressSchema.country
-// defaults to 'IN'), so this was inconsistent with everything else.
 const formatINR = (n) =>
   new Intl.NumberFormat("en-IN", {
     style: "currency",

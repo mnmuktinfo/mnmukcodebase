@@ -3,21 +3,7 @@
 ───────────────────────────────────── */
 export const BRAND_PINK = "#da127d";
 
-export const COLLECTION_LABELS = {
-  all: "All Products",
-  "new-arrivals": "New Arrivals",
-  bestsellers: "Bestsellers",
-  dresses: "Dresses",
-  tops: "Tops",
-  shirts: "Shirts",
-  "co-ord-sets": "Co-ord Sets",
-  jackets: "Jackets",
-  bottoms: "Bottoms",
-  "rang-tie-dye": "Rang (Tie-Dye)",
-  artsy: "Artsy",
-  basics: "Basics",
-  "on-sale": "On Sale",
-};
+
 
 export const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "3XL", "Free Size"];
 

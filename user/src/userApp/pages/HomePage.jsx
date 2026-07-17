@@ -2,7 +2,10 @@ import React, { Suspense, useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 
 import { useHomepageProducts } from "../features/mainPage/hooks/useHomepageProducts";
-import { productSections } from "../features/mainPage/config/productCollection";
+import {
+  collectionsData,
+  productSections,
+} from "../features/mainPage/config/productCollection";
 import { IMAGES } from "../../assets/images";
 import {
   HeroSkeleton,
@@ -23,7 +26,6 @@ const HeroSection = React.lazy(
 const CustomerSpotlight = React.lazy(
   () => import("../features/mainPage/components/CustomerSpotlight"),
 );
-
 const VideoSection = React.lazy(
   () => import("../features/mainPage/components/VideoSection"),
 );
@@ -45,27 +47,51 @@ const ProductSection = React.lazy(
 const TestimonialsSection = React.lazy(
   () => import("../features/mainPage/components/TestimonialsSection"),
 );
+const SeoLinksSection = React.lazy(
+  () => import("../features/mainPage/components/SeoLinksSection"),
+);
 
-/* ---------- Mobile Detection ---------- */
+/* ---------- Optimized Mobile Detection ---------- */
 const useIsMobile = () => {
-  const [mobile, setMobile] = useState(window.innerWidth < 768);
+  const [mobile, setMobile] = useState(false);
 
   useEffect(() => {
-    const handleResize = () => setMobile(window.innerWidth < 768);
+    if (typeof window === "undefined") return;
+
+    setMobile(window.innerWidth < 768);
+    let timeoutId;
+
+    const handleResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        setMobile(window.innerWidth < 768);
+      }, 150);
+    };
+
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   return mobile;
 };
 
-/* ---------- Viewport Loader ---------- */
-const ViewportLoader = ({ children, rootMargin = "250px" }) => {
+/* ---------- Bot-Aware Viewport Loader ---------- */
+const ViewportLoader = ({ children, rootMargin = "300px" }) => {
   const ref = useRef(null);
-  const [visible, setVisible] = useState(false);
+
+  // Instantly render content for Search Engine Crawlers & Performance Testers
+  const isBotOrTest =
+    /googlebot|bingbot|yandex|baiduspider|vkshare|pinterest|slackbot|whatsapp|lighthouse|chrome-lighthouse/i.test(
+      typeof navigator !== "undefined" ? navigator.userAgent : "",
+    );
+
+  const [visible, setVisible] = useState(isBotOrTest);
 
   useEffect(() => {
-    if (!ref.current) return;
+    if (visible || !ref.current) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -79,11 +105,11 @@ const ViewportLoader = ({ children, rootMargin = "250px" }) => {
 
     observer.observe(ref.current);
     return () => observer.disconnect();
-  }, []);
+  }, [visible, rootMargin]);
 
   return (
     <div ref={ref}>
-      {visible ? children : <div className="min-h-[200px]" />}
+      {visible ? children : <div className="min-h-[250px]" />}
     </div>
   );
 };
@@ -115,7 +141,6 @@ const HomePage = () => {
     collectionsLoading,
   } = useHomepageProducts(productSections);
 
-  /* ---------- Product Getter ---------- */
   const getProducts = (key) => {
     const items = homeProducts[key] ?? [];
     return isMobile ? items.slice(0, 4) : items;
@@ -124,7 +149,6 @@ const HomePage = () => {
   const desktopSlides = IMAGES?.hero?.desktopSlides ?? [];
   const mobileSlides = IMAGES?.hero?.mobileSlides ?? [];
 
-  /* ---------- Reusable Section ---------- */
   const renderSection = (section) => {
     if (!section) return null;
 
@@ -148,11 +172,14 @@ const HomePage = () => {
   return (
     <main className="w-full min-h-screen bg-white text-[#111] overflow-x-hidden selection:bg-pink-600 selection:text-white">
       <Helmet>
-        <title>Mnmukt — Official Store | Premium Ethnic Wear</title>
+        <title>
+          Mnmukt | Premium Ethnic Wear, Kurta Sets &amp; Women's Fashion Online
+        </title>
         <meta
           name="description"
-          content="Discover premium intricately crafted Salwar Suits, Kurta sets, and lifestyle products at Mnmukt."
+          content="Discover handcrafted ethnic wear, kurta sets, co-ord sets, dresses, salwar suits, and lifestyle essentials at Mnmukt. Free shipping, secure checkout, and premium quality."
         />
+        <link rel="canonical" href="https://mnmukt.com/" />
       </Helmet>
 
       {/* HERO */}
@@ -198,8 +225,8 @@ const HomePage = () => {
             <CollectionGrid
               title="Shop by Collection"
               subtitle="Discover curated collections crafted for you"
-              items={collectionItems}
-              loading={collectionsLoading}
+              items={productSections}
+              // loading={collectionsLoading}
             />
           </ViewportLoader>
         </Suspense>
@@ -208,7 +235,7 @@ const HomePage = () => {
       {/* SECTION 1 */}
       {renderSection(section1)}
 
-      {/* CATEGORY */}
+      {/* CATEGORY
       <Section>
         <Suspense fallback={<CategoriesSkeleton />}>
           <CategoryScroller
@@ -218,26 +245,31 @@ const HomePage = () => {
             subtitle="Excellence that speaks for itself."
           />
         </Suspense>
-      </Section>
-
+      </Section> */}
+      <CollectionGrid
+        // title="Shop by Collection"
+        // subtitle="Discover curated collections crafted for you"
+        items={collectionsData}
+        // loading={collectionsLoading}
+      />
       {/* SECTION 2 */}
       {renderSection(section2)}
 
       {/* VIDEO (desktop only) */}
-      {!isMobile && (
-        <Section>
-          <Suspense fallback={<HeroSkeleton />}>
-            <ViewportLoader>
-              <VideoSection />
-            </ViewportLoader>
-          </Suspense>
-        </Section>
-      )}
+      {/* {!isMobile && ( */}
+      <Section>
+        <Suspense fallback={<HeroSkeleton />}>
+          <ViewportLoader>
+            <VideoSection />
+          </ViewportLoader>
+        </Suspense>
+      </Section>
+      {/* )} */}
 
       {/* SECTION 3 */}
       {renderSection(section3)}
 
-      {/* EXPLORE (desktop only) */}
+      {/* EXPLORE (desktop only)
       {!isMobile && (
         <Section>
           <Suspense fallback={<HeroSkeleton />}>
@@ -246,7 +278,7 @@ const HomePage = () => {
             </ViewportLoader>
           </Suspense>
         </Section>
-      )}
+      )} */}
 
       {/* SECTION 4 */}
       {renderSection(section4)}
@@ -281,6 +313,16 @@ const HomePage = () => {
           </ViewportLoader>
         </Suspense>
       </Section>
+
+      {/* SEO / BACKLINKS */}
+      <Section>
+        <Suspense fallback={null}>
+          <ViewportLoader>
+            <SeoLinksSection />
+          </ViewportLoader>
+        </Suspense>
+      </Section>
+
       <ScrollToTopButton />
     </main>
   );

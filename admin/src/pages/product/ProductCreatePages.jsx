@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 
 import { CATEGORIES } from "../../constants/categories";
-import { COLLECTIONS } from "../../constants/collections";
 
 import { useProductForm } from "../../components/productManage/hook/useProductForm";
 
@@ -27,6 +26,7 @@ import ProductStatusCard from "../../components/productManage/createProduct/prod
 import MobileStickySaveButton from "../../components/productManage/createProduct/ui/MobileStickySaveButton";
 import ProductSpecsHighlightsCard from "../../components/productManage/createProduct/productForm/ProductSpecsHighlightsCard";
 import ProductSEOCard from "../../components/productManage/createProduct/productForm/ProductSEOCard";
+import { productSections } from "../../constants/productSections";
 // 👈 REMOVED: ProductAttributesCard (pattern/fit/sleeve/neckline/length/occasion —
 // none of these fields exist on the hook's product state anymore) and
 // VariantStockCard (variantList / updateVariantStock don't exist on the hook —
@@ -394,7 +394,7 @@ Wait for my answers before generating the HTML.`;
               newCollection={newCollection}
               setNewCollection={setNewCollection}
               CATEGORIES={CATEGORIES}
-              COLLECTIONS={COLLECTIONS}
+              COLLECTIONS={productSections}
             />
 
             <ProductSEOCard product={product} handleChange={handleChange} />

@@ -19,11 +19,19 @@ async function connectDB() {
     logger.warn('MongoDB disconnected');
   });
 
-  await mongoose.connect(env.MONGO_URI, {
-    maxPoolSize: 20,
-    serverSelectionTimeoutMS: 10000,
-    autoIndex: !env.IS_PROD, // build indexes manually in prod via migration/script
-  });
+  try {
+    await mongoose.connect(env.MONGO_URI, {
+      maxPoolSize: 20,
+      serverSelectionTimeoutMS: 10000,
+      autoIndex: !env.IS_PROD, // build indexes manually in prod via migration/script
+    });
+  } catch (err) {
+    logger.error(
+      { errName: err.name, errMessage: err.message },
+      'Initial MongoDB connection failed'
+    );
+    throw err;
+  }
 
   return mongoose.connection;
 }

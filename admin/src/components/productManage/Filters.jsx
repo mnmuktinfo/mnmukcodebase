@@ -1,7 +1,7 @@
 import React from "react";
 import { Search, Filter, ChevronDown, X } from "lucide-react";
 import { CATEGORIES } from "../../constants/categories";
-import { COLLECTIONS } from "../../constants/collections";
+import { productSections } from "../../constants/productSections";
 
 const Filters = ({
   categoryFilter,
@@ -79,9 +79,9 @@ const Filters = ({
             rounded-sm text-sm bg-white outline-none cursor-pointer
             focus:border-[#2874F0] focus:ring-1 focus:ring-[#2874F0] transition-all">
           <option value="all">All Collections</option>
-          {COLLECTIONS.map((col) => (
-            <option key={col.id} value={col.id}>
-              {col.name}
+          {productSections.map((col) => (
+            <option key={col.key} value={col.key}>
+              {col.title}
             </option>
           ))}
         </select>

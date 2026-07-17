@@ -1,3 +1,4 @@
+// components/cards/ProductCard.jsx
 import React, { useState, useMemo, useCallback } from "react";
 import { Heart, Check } from "lucide-react";
 import { useWishlist } from "../../features/wishList/context/WishlistContext";
@@ -7,9 +8,10 @@ import NotificationProduct from "./NotificationProduct";
 import QuickShopModal from "./QuickShopModal";
 
 const priceFormatter = new Intl.NumberFormat("en-IN");
+const formatPrice = (price) => priceFormatter.format(price || 0);
 
 /* =========================================================
-   PRODUCT CARD - WITH COMPLETE DATA VALIDATION
+   PRODUCT CARD - WITH COMPLETE DATA VALIDATION & RESPONSIVE POLISH
 ========================================================= */
 const ProductCard = ({ product }) => {
   const [isQuickShopOpen, setIsQuickShopOpen] = useState(false);
@@ -21,7 +23,6 @@ const ProductCard = ({ product }) => {
     type: "",
   });
 
-  // ✅ Validate + normalize incoming product data
   const validatedProduct = useMemo(() => {
     if (!product?.id) return null;
 
@@ -33,9 +34,6 @@ const ProductCard = ({ product }) => {
       (product.isFeatured && "Featured") ||
       null;
 
-    // colors is optional — plenty of products (accessories, one-color
-    // items) legitimately have none. Keep it as [] rather than undefined
-    // so downstream code can always safely check .length.
     const colors = Array.isArray(product.colors) ? product.colors : [];
     const sizes = Array.isArray(product.sizes) ? product.sizes : [];
 
@@ -51,15 +49,13 @@ const ProductCard = ({ product }) => {
       hoverImage: product.hoverImage || null,
       images: product.images || [],
       badge: derivedBadge,
-      colors, // [] if the product has no color options
-      sizes, // [] if the product has no size options
+      colors,
+      sizes,
       hasColors: colors.length > 0,
       hasSizes: sizes.length > 0,
     };
   }, [product]);
 
-  // ⚠️ Hooks must run unconditionally, on every render — never after an
-  // early return, or React throws / desyncs state across renders.
   const {
     isWishlisted,
     toggleWishlist,
@@ -87,14 +83,13 @@ const ProductCard = ({ product }) => {
     [wishlistLoading, toggleWishlist, validatedProduct],
   );
 
-  const formatPrice = (price) => priceFormatter.format(price || 0);
-
-  // Placeholder for invalid product — rendered AFTER all hooks above.
   if (!validatedProduct) {
     console.warn("⚠️ ProductCard: Missing product.id");
     return (
-      <div className="w-full aspect-[3/4] bg-gray-100 flex items-center justify-center">
-        <p className="text-xs text-gray-500">Product unavailable</p>
+      <div className="w-full aspect-[3/4] bg-[#F9F5F6] flex items-center justify-center rounded-sm md:rounded-none border border-gray-100/50">
+        <p className="text-[10px] md:text-xs text-gray-400 uppercase tracking-widest">
+          Unavailable
+        </p>
       </div>
     );
   }
@@ -112,10 +107,6 @@ const ProductCard = ({ product }) => {
             100,
         );
 
-  // Builds a stable variant key. Falls back gracefully when a product
-  // doesn't have color and/or size options, so "no color" products
-  // don't end up with a bogus "-default" or "-undefined" suffix baked
-  // into every order line.
   const buildVariantId = (size, color) => {
     const parts = [];
     if (validatedProduct.hasSizes) parts.push(size || "onesize");
@@ -123,18 +114,11 @@ const ProductCard = ({ product }) => {
     return parts.length ? parts.join("-") : "standard";
   };
 
-  /* ✅ ADD TO CART - COMPLETE DATA ONLY */
-  /* ✅ ADD TO CART - COMPLETE DATA ONLY */
   const executeAddToCart = async (selectedData) => {
     try {
-      // Only trust a real size if this product actually has size options —
-      // ignore whatever QuickShopModal sends otherwise, so a sizeless
-      // product can never end up with a bogus "M"/"L"/etc baked in.
       const selectedSize = validatedProduct.hasSizes
         ? selectedData.size || "onesize"
         : "onesize";
-      // Only attach a color if this product actually has color options —
-      // otherwise leave it null so it doesn't look like a real selection.
       const selectedColor = validatedProduct.hasColors
         ? selectedData.color || null
         : null;
@@ -149,13 +133,11 @@ const ProductCard = ({ product }) => {
         slug: validatedProduct.slug,
         sku: validatedProduct.sku,
         selectedSize,
-        selectedColor, // { name, hex } or null
+        selectedColor,
         variantId: buildVariantId(selectedSize, selectedColor),
         quantity: selectedData.quantity || 1,
       };
 
-      // If this product HAS colors, a color must actually be picked —
-      // otherwise warehouse can't tell which variant to pack.
       if (validatedProduct.hasColors && !selectedColor) {
         setNotification({
           show: true,
@@ -176,10 +158,9 @@ const ProductCard = ({ product }) => {
       const missingFields = requiredFields.filter((field) => !cartItem[field]);
 
       if (missingFields.length > 0) {
-        console.error("❌ Missing required fields:", missingFields, cartItem);
         setNotification({
           show: true,
-          message: "Product data incomplete. Try refreshing.",
+          message: "Product data incomplete.",
           type: "error",
         });
         return;
@@ -196,7 +177,6 @@ const ProductCard = ({ product }) => {
       });
       setTimeout(() => setIsAdded(false), 2000);
     } catch (error) {
-      console.error("Add to cart error:", error);
       setNotification({
         show: true,
         message: "Could not add to bag",
@@ -205,15 +185,12 @@ const ProductCard = ({ product }) => {
     }
   };
 
-  /* ✅ BUY NOW - COMPLETE DATA ONLY */
   const executeBuyNow = (selectedData) => {
     try {
       const qty = selectedData.quantity || 1;
-
       const selectedSize = validatedProduct.hasSizes
         ? selectedData.size || "onesize"
         : "onesize";
-
       const selectedColor = validatedProduct.hasColors
         ? selectedData.color || null
         : null;
@@ -227,34 +204,28 @@ const ProductCard = ({ product }) => {
         return;
       }
 
-      const variantId = buildVariantId(selectedSize, selectedColor);
-
-      const checkoutItems = [
-        {
-          productId: validatedProduct.id,
-          name: validatedProduct.name,
-          price: validatedProduct.price,
-          originalPrice: validatedProduct.originalPrice,
-          image: mainImage,
-          category: validatedProduct.category,
-          slug: validatedProduct.slug,
-          sku: validatedProduct.sku,
-          quantity: qty,
-          selectedSize,
-          selectedColor,
-          variantId,
-        },
-      ];
-
       setIsQuickShopOpen(false);
-
       navigate("/checkout/buy-now", {
         state: {
-          items: checkoutItems,
+          items: [
+            {
+              productId: validatedProduct.id,
+              name: validatedProduct.name,
+              price: validatedProduct.price,
+              originalPrice: validatedProduct.originalPrice,
+              image: mainImage,
+              category: validatedProduct.category,
+              slug: validatedProduct.slug,
+              sku: validatedProduct.sku,
+              quantity: qty,
+              selectedSize,
+              selectedColor,
+              variantId: buildVariantId(selectedSize, selectedColor),
+            },
+          ],
         },
       });
     } catch (error) {
-      console.error("Buy now error:", error);
       setNotification({
         show: true,
         message: "Could not proceed to checkout",
@@ -299,9 +270,9 @@ const ProductCard = ({ product }) => {
       <div
         className="group flex flex-col w-full font-sans cursor-pointer relative"
         onClick={handleNavigate}>
-        <div className="relative w-full aspect-[3/4] bg-[#F9F5F6] overflow-hidden border border-gray-100/50">
+        <div className="relative w-full aspect-[3/4] bg-[#F9F5F6] overflow-hidden rounded-sm md:rounded-none border border-gray-100/50">
           {!imgLoaded && (
-            <div className="absolute inset-0 bg-gray-100 animate-pulse z-0" />
+            <div className="absolute inset-0 bg-[#F9F5F6] animate-pulse z-0" />
           )}
 
           <img
@@ -318,11 +289,11 @@ const ProductCard = ({ product }) => {
             alt={`${validatedProduct.name} alternate`}
             loading="lazy"
             decoding="async"
-            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700 opacity-0 group-hover:opacity-100"
+            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700 opacity-0 md:group-hover:opacity-100"
           />
 
           {validatedProduct.badge && (
-            <div className="absolute top-3 left-3 text-[9px] sm:text-[10px] font-bold text-white bg-[#da127d] uppercase tracking-[0.15em] px-2.5 py-1.5 shadow-sm z-10">
+            <div className="absolute top-2.5 left-2.5 md:top-3 md:left-3 text-[8px] sm:text-[9px] md:text-[10px] font-bold text-white bg-[#da127d] uppercase tracking-[0.15em] px-2 py-1 md:px-2.5 md:py-1.5 shadow-sm z-10">
               {validatedProduct.badge}
             </div>
           )}
@@ -331,9 +302,9 @@ const ProductCard = ({ product }) => {
             onClick={handleWishlist}
             disabled={wishlistLoading}
             aria-label={isLiked ? "Remove from wishlist" : "Add to wishlist"}
-            className="absolute top-3 right-3 w-8 h-8 sm:w-9 sm:h-9 bg-white/95 backdrop-blur-sm flex items-center justify-center hover:bg-[#da127d] transition-colors duration-300 z-10 disabled:opacity-60 shadow-sm group/heart">
+            className="absolute top-2.5 right-2.5 md:top-3 md:right-3 w-8 h-8 sm:w-9 sm:h-9 md:w-8 md:h-8 bg-white/95 backdrop-blur-sm flex items-center justify-center hover:bg-[#da127d] transition-colors duration-300 z-10 disabled:opacity-60 shadow-sm group/heart rounded-full md:rounded-none">
             <Heart
-              size={16}
+              size={15}
               strokeWidth={isLiked ? 0 : 1.5}
               className={`transition-colors duration-300 ${
                 isLiked
@@ -343,50 +314,75 @@ const ProductCard = ({ product }) => {
             />
           </button>
 
-          <div className="absolute bottom-3 right-3 z-10">
+          <div className="absolute bottom-2.5 right-2.5 md:bottom-3 md:right-3 z-10">
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setIsQuickShopOpen(true);
+                if (validatedProduct.hasColors || validatedProduct.hasSizes) {
+                  setIsQuickShopOpen(true);
+                } else {
+                  executeAddToCart({ quantity: 1 });
+                }
               }}
               disabled={cartSyncing || isAdded}
               aria-label="Quick Shop"
-              className={`w-9 h-9 flex items-center justify-center rounded-full shadow-md transition-all duration-300 ${
+              className={`w-8 h-8 sm:w-9 sm:h-9 md:w-8 md:h-8 bg-white/95 backdrop-blur-sm flex items-center justify-center rounded-full md:rounded-none shadow-sm transition-all duration-300 ${
                 isAdded
                   ? "bg-[#da127d] text-white"
-                  : "bg-white text-gray-900 hover:bg-[#da127d] hover:text-white"
+                  : "text-gray-900 hover:bg-[#da127d] hover:text-white"
               }`}>
               {isAdded ? (
-                <Check size={16} strokeWidth={2.5} />
+                <Check size={14} strokeWidth={2.5} />
               ) : (
-                <span className="text-lg font-bold">+</span>
+                <span className="text-lg md:text-xl font-light mb-0.5">+</span>
               )}
             </button>
           </div>
         </div>
 
-        <div className="pt-4 pb-3 flex flex-col items-center text-center px-1">
-          <h3 className="text-[12px] sm:text-[13px] font-semibold text-gray-900 uppercase tracking-widest truncate w-full transition-colors duration-300 group-hover:text-[#da127d]">
+        <div className="pt-3 pb-2 md:pt-4 md:pb-3 flex flex-col items-center text-center px-1">
+          <h3 className="text-[10px] sm:text-[11px] md:text-[12px] font-semibold text-gray-900 uppercase tracking-widest truncate w-full transition-colors duration-300 group-hover:text-[#da127d]">
             {validatedProduct.name}
           </h3>
-          <p className="text-[11px] sm:text-[12px] text-gray-500 italic font-serif mt-1.5 truncate w-full">
+
+          <p className="text-[10px] sm:text-[11px] text-gray-500 italic font-serif mt-1 md:mt-1.5 truncate w-full">
             {validatedProduct.category}
           </p>
-          <div className="flex items-center justify-center gap-2 mt-2.5">
-            <span className="text-[14px] font-semibold text-gray-900">
+
+          <div className="flex flex-wrap items-center justify-center gap-1.5 md:gap-2 mt-1.5 md:mt-2.5">
+            <span className="text-[12px] md:text-[13px] font-semibold text-gray-900">
               ₹{formatPrice(validatedProduct.price)}
             </span>
             {discount > 0 && (
               <>
-                <span className="text-[12px] text-gray-400 line-through">
+                <span className="text-[10px] md:text-[11px] text-gray-400 line-through">
                   ₹{formatPrice(validatedProduct.originalPrice)}
                 </span>
-                <span className="text-[11px] font-semibold text-[#da127d]">
+                <span className="text-[9px] md:text-[10px] font-semibold text-[#da127d]">
                   {discount}% OFF
                 </span>
               </>
             )}
           </div>
+
+          {/* Render Color Swatches matching VideoSection */}
+          {/* {validatedProduct.hasColors && (
+            <div className="flex items-center justify-center gap-1 mt-1.5 md:mt-2">
+              {validatedProduct.colors.slice(0, 4).map((c, i) => (
+                <span
+                  key={c.name || i}
+                  title={c.name}
+                  className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full border border-gray-300"
+                  style={{ backgroundColor: c.hex }}
+                />
+              ))}
+              {validatedProduct.colors.length > 4 && (
+                <span className="text-[8px] md:text-[9px] text-gray-400">
+                  +{validatedProduct.colors.length - 4}
+                </span>
+              )}
+            </div>
+          )} */}
         </div>
       </div>
     </>

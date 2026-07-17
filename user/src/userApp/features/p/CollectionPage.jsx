@@ -1,5 +1,12 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, {
+  useRef,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useParams, useSearchParams } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 
 import { useCollection } from "./Usecollection";
 
@@ -11,39 +18,105 @@ import MobileBottomFilterBar from "./components/MobileBottomFilterBar";
 
 import Breadcrumb from "./components/Breadcrumb";
 import ActiveChips from "./components/ActiveChips";
-
-// import CollectionHeader from "./components/CollectionHeader";
 import CollectionSearch from "./components/CollectionSearch";
 import ProductGrid from "./components/ProductGrid";
 
-import { COLLECTION_LABELS, SORT_OPTIONS } from "./constants/filters";
-
+// Removed COLLECTION_LABELS import
+import { parseCollectionSlug } from "./utils/collectionSlug";
 import countActive from "./utils/countActive";
 import { readFilters } from "./utils/filterUtils";
 
+// Import BOTH productSections and collectionsData
+import {
+  productSections,
+  collectionsData,
+} from "../mainPage/config/productCollection";
+
 const CollectionPage = ({ collectionType: propCollectionType }) => {
   const { collectionType: routeCollectionType = "all" } = useParams();
-  // Use prop if passed, otherwise use route param
   const collectionType = propCollectionType || routeCollectionType;
   const [sp, setSp] = useSearchParams();
+
+  /**
+   * Price band parsing for slugs like /collections/below-1000
+   */
+  const {
+    isPriceCollection,
+    priceRange = {},
+    label: priceLabel,
+  } = useMemo(() => parseCollectionSlug(collectionType), [collectionType]);
+
+  /**
+   * Sync price slug bounds to actual URL search params
+   */
+  const prevCollectionTypeRef = useRef(collectionType);
+
+  useLayoutEffect(() => {
+    if (!isPriceCollection) {
+      prevCollectionTypeRef.current = collectionType;
+      return;
+    }
+
+    const navigatedToNewSlug = prevCollectionTypeRef.current !== collectionType;
+    prevCollectionTypeRef.current = collectionType;
+
+    const next = new URLSearchParams(sp);
+    let changed = false;
+
+    if (priceRange.min != null) {
+      if (navigatedToNewSlug || !next.has("priceMin")) {
+        next.set("priceMin", String(priceRange.min));
+        changed = true;
+      }
+    } else if (navigatedToNewSlug && next.has("priceMin")) {
+      next.delete("priceMin");
+      changed = true;
+    }
+
+    if (priceRange.max != null) {
+      if (navigatedToNewSlug || !next.has("priceMax")) {
+        next.set("priceMax", String(priceRange.max));
+        changed = true;
+      }
+    } else if (navigatedToNewSlug && next.has("priceMax")) {
+      next.delete("priceMax");
+      changed = true;
+    }
+
+    if (changed) setSp(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPriceCollection, priceRange.min, priceRange.max, collectionType]);
+
+  // Read active filters from URL
   const filters = useMemo(() => readFilters(sp), [sp]);
 
-  const [sort, setSort] = useState("newest");
-  const [gridCols, setGridCols] = useState(4);
+  // Sync sort state directly to the URL
+  const sort = sp.get("sort") || "newest";
+  const setSort = (newSort) => {
+    const next = new URLSearchParams(sp);
+    if (newSort === "newest") {
+      next.delete("sort"); // Keep URL clean if it's the default
+    } else {
+      next.set("sort", newSort);
+    }
+    setSp(next, { replace: true });
+  };
 
+  const [gridCols, setGridCols] = useState(4);
   const [showFilterSheet, setShowFilterSheet] = useState(false);
   const [showSortSheet, setShowSortSheet] = useState(false);
+
+  const effectiveCollectionType = isPriceCollection ? "all" : collectionType;
 
   const {
     displayProducts,
     facets,
-    totalFetched,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
     isLoading,
     isError,
-  } = useCollection({ collectionType, filters, sort });
+  } = useCollection({ collectionType: effectiveCollectionType, sort });
 
   /* Infinite Scroll */
   const sentinelRef = useRef(null);
@@ -75,13 +148,37 @@ const CollectionPage = ({ collectionType: propCollectionType }) => {
     };
   }, [showFilterSheet, showSortSheet]);
 
-  /* Title */
+  /* ─────────────────────────────────────────────────────────────
+     SEO & METADATA INJECTION (Powered by collectionsData.js)
+  ───────────────────────────────────────────────────────────── */
+
+  // Look up the collection in BOTH provided arrays
+  const sectionData = productSections.find((s) => s.key === collectionType);
+  const categoryData = collectionsData.find((c) => c.slug === collectionType);
+
+  // Fallback chain for the title
   const title =
-    COLLECTION_LABELS[collectionType] ??
+    priceLabel ??
+    sectionData?.title ??
+    categoryData?.title ??
     collectionType.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
-  const filterCnt = countActive(filters);
+  // Determine SEO Title
+  const seoTitle = sectionData?.seoTitle
+    ? `${sectionData.seoTitle} | Mnmukt`
+    : `${title} | Mnmukt`;
 
+  // Determine SEO Description (Falls back to category subtitle if seoDescription isn't present)
+  const seoDescription = isPriceCollection
+    ? `Shop women's fashion ${title.toLowerCase()} at Mnmukt. Discover kurtas, suits, dresses, sarees and more, all priced to fit your budget.`
+    : (sectionData?.seoDescription ??
+      categoryData?.subtitle ??
+      `Shop the ${title} collection at Mnmukt — premium ethnic and contemporary women's wear, curated for quality and style.`);
+
+  // Determine optional Page Header Subtitle
+  const pageSubtitle = sectionData?.subtitle ?? categoryData?.subtitle;
+
+  const filterCnt = countActive(filters);
   const gridClass = {
     2: "grid-cols-2",
     3: "grid-cols-2 sm:grid-cols-3",
@@ -90,6 +187,15 @@ const CollectionPage = ({ collectionType: propCollectionType }) => {
 
   return (
     <>
+      <Helmet>
+        <title>{seoTitle}</title>
+        <meta name="description" content={seoDescription} />
+        <link
+          rel="canonical"
+          href={`https://mnmukt.com/collections/${collectionType}`}
+        />
+      </Helmet>
+
       <style>{`
         @keyframes fadeUp {
           from { opacity:0; transform:translateY(16px); }
@@ -117,7 +223,20 @@ const CollectionPage = ({ collectionType: propCollectionType }) => {
         )}
 
         {/* Breadcrumb */}
-        <Breadcrumb items={[{ label: "Home", href: "/" }, { label: title }]} />
+        <Breadcrumb
+          items={[
+            { label: "Home", href: "/" },
+            { label: "Collections", href: "/collections/all" },
+            { label: title },
+          ]}
+        />
+
+        {/* Optional Page Header using dynamic subtitle */}
+        {pageSubtitle && !isPriceCollection && (
+          <div className="px-6 lg:px-12 mt-4 text-gray-600 text-sm md:text-base">
+            {pageSubtitle}
+          </div>
+        )}
 
         <div className="flex px-6 lg:px-12 mt-6 lg:mt-10">
           {/* Desktop Sidebar */}

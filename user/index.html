@@ -38,9 +38,6 @@
     <link rel="dns-prefetch" href="//fonts.gstatic.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- checkout-ui.shiprocket.com is already loaded below for the checkout
-         script/stylesheet, so preconnecting to it early saves a DNS+TLS
-         round trip once that resource is requested. -->
     <link rel="preconnect" href="https://checkout-ui.shiprocket.com" />
 
     <link
@@ -126,93 +123,70 @@
       })(window, document, "script", "dataLayer", "GTM-5T42L3VS");
     </script>
     <!-- End Google Tag Manager -->
-    <!-- ── STRUCTURED DATA: Organization ── -->
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "Organization",
-        "@id": "https://mnmukt.com/#organization",
-        "name": "Mnmukt",
-        "url": "https://mnmukt.com/",
-        "logo": {
-          "@type": "ImageObject",
-          "@id": "https://mnmukt.com/#logo",
-          "url": "https://mnmukt.com/appLogo.png",
-          "contentUrl": "https://mnmukt.com/appLogo.png",
-          "name": "Mnmukt Logo"
-        },
-        "email": "support@mnmukt.com",
-        "sameAs": [
-          "https://www.instagram.com/mnmukt",
-          "https://www.facebook.com/mnmukt"
-        ]
-      }
-    </script>
 
-    <!-- ── STRUCTURED DATA: WebSite + Sitelinks Search Box ──
-         This is what lets Google show a search bar under your listing.
-         The urlTemplate MUST match your actual on-site search route. -->
+    <!-- ── COMBINED LINKED STRUCTURED DATA ── -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "WebSite",
-        "url": "https://mnmukt.com/",
-        "name": "Mnmukt",
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": {
-            "@type": "EntryPoint",
-            "urlTemplate": "https://mnmukt.com/search?q={search_term_string}"
-          },
-          "query-input": "required name=search_term_string"
-        }
-      }
-    </script>
-
-    <!-- ── STRUCTURED DATA: WebPage ── -->
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "WebPage",
-        "@id": "https://mnmukt.com/#webpage",
-        "url": "https://mnmukt.com/",
-        "name": "Mnmukt",
-        "isPartOf": { "@id": "https://mnmukt.com/#website" },
-        "about": { "@id": "https://mnmukt.com/#organization" },
-        "description": "Premium ethnic wear and lifestyle store."
-      }
-    </script>
-
-    <!-- ── STRUCTURED DATA: Breadcrumb ── -->
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "BreadcrumbList",
-        "itemListElement": [
+        "@graph": [
           {
-            "@type": "ListItem",
-            "position": 1,
-            "name": "Home",
-            "item": "https://mnmukt.com"
+            "@type": "Organization",
+            "@id": "https://mnmukt.com/#organization",
+            "name": "Mnmukt",
+            "url": "https://mnmukt.com/",
+            "logo": {
+              "@type": "ImageObject",
+              "@id": "https://mnmukt.com/#logo",
+              "url": "https://mnmukt.com/appLogo.png",
+              "caption": "Mnmukt Logo"
+            },
+            "email": "support@mnmukt.com",
+            "sameAs": [
+              "https://www.instagram.com/mnmukt",
+              "https://www.facebook.com/mnmukt"
+            ]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://mnmukt.com/#website",
+            "url": "https://mnmukt.com/",
+            "name": "Mnmukt",
+            "publisher": { "@id": "https://mnmukt.com/#organization" },
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "https://mnmukt.com/search?q={search_term_string}"
+              },
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "WebPage",
+            "@id": "https://mnmukt.com/#webpage",
+            "url": "https://mnmukt.com/",
+            "name": "Mnmukt | Premium Ethnic Wear, Kurta Sets & Women's Fashion Online",
+            "isPartOf": { "@id": "https://mnmukt.com/#website" },
+            "about": { "@id": "https://mnmukt.com/#organization" },
+            "description": "Premium ethnic wear and lifestyle store featuring handcrafted designs."
+          },
+          {
+            "@type": "BreadcrumbList",
+            "@id": "https://mnmukt.com/#breadcrumb",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://mnmukt.com"
+              }
+            ]
           }
         ]
       }
     </script>
 
-    <!--
-      ── PERFORMANCE: Critical CSS inline ──
-      Paste your above-the-fold CSS here to eliminate render-blocking.
-    -->
-
     <style>
-      /* Standard "visually hidden but accessible/crawlable" pattern for
-         the SEO fallback content below. NOT display:none or
-         visibility:hidden — those are ignored (or devalued) by crawlers.
-         This keeps the text in the DOM and accessibility tree, readable by
-         non-JS bots and screen readers, with zero visible footprint for
-         sighted users. React overwrites #root's contents on hydration
-         anyway, so this only ever matters in the brief pre-hydration
-         window and for crawlers that don't run JS at all. */
       .seo-fallback {
         position: absolute;
         width: 1px;
@@ -238,30 +212,48 @@
           style="display: none; visibility: hidden"></iframe
       ></noscript>
       <!-- End Google Tag Manager (noscript) -->
-      <!--
-        ── SEO SAFETY NET FOR SPAs ──
-        Because this is a Vite/React app, this div is empty until JS runs.
-        Google can execute JS, but rendering is delayed to a "second wave"
-        of indexing and can be skipped under crawl-budget pressure, and
-        OTHER crawlers (Bing, LinkedIn, WhatsApp preview bots, some AI
-        crawlers) do NOT execute JS at all.
 
-        The content below is wrapped in .seo-fallback so it is visually
-        hidden and never flashes on screen before React mounts — it exists
-        purely for crawlers. React overwrites this div's contents on
-        hydration, so real visitors never see it either way.
-      -->
+      <!-- ── ADVANCED SITELINK GENERATION FEED ── -->
       <div class="seo-fallback">
-        <h1>Mnmukt – Premium Ethnic Wear</h1>
+        <h1>Mnmukt – Premium Ethnic Wear & Women's Fashion</h1>
         <p>
           Shop handcrafted kurta sets, dresses, co-ord sets, and premium women's
           fashion online.
         </p>
-        <nav>
-          <a href="/collections">Collections</a>
-          <a href="/new-arrivals">New Arrivals</a>
-          <a href="/best-sellers">Best Sellers</a>
-          <a href="/about">About Us</a>
+
+        <nav aria-label="Main Navigation Fallback">
+          <ul>
+            <li>
+              <a href="https://mnmukt.com/collections">Dresses</a>
+              <p>
+                Explore gorgeous traditional and modern style dresses you'll
+                love for every occasion.
+              </p>
+            </li>
+            <li>
+              <a href="https://mnmukt.com/new-arrivals">New Arrivals</a>
+              <p>
+                Discover our latest drop. Fresh silhouettes, artisanal
+                collections, and stylish trends.
+              </p>
+            </li>
+            <li>
+              <a href="https://mnmukt.com/best-sellers"
+                >Fashion-Forward Women's Wear</a
+              >
+              <p>
+                Shop premium ethnic outfits, handcrafted premium Kurtas, and top
+                trending statement sets.
+              </p>
+            </li>
+            <li>
+              <a href="https://mnmukt.com/about">Learn More About Us</a>
+              <p>
+                Effortless elegance and premium tailoring. Read about the Mnmukt
+                design philosophy.
+              </p>
+            </li>
+          </ul>
         </nav>
       </div>
     </div>

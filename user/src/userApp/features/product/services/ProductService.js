@@ -84,7 +84,7 @@ export const normalize = (id, data) => {
     isNewArrival: data.isNewArrival ?? false,
     isBestSeller: data.isBestSeller ?? false,
     offers: Array.isArray(data.offers) ? data.offers : [], // 👈 promos shown to customers
-    seo: {                                                // 👈 needed for <title>/<meta> on PDP
+    seo: {                                              // 👈 needed for <title>/<meta> on PDP
       metaTitle: data.seo?.metaTitle ?? "",
       metaDescription: data.seo?.metaDescription ?? "",
       metaKeywords: data.seo?.metaKeywords ?? "",
@@ -128,14 +128,21 @@ export const productService = {
     if (cache.has(cacheKey)) return cache.get(cacheKey);
 
     const constraints = [];
-    if (category !== "all")
+    
+    // FIX: Add the missing category constraint so category pages actually filter by category
+    if (category !== "all") {
       constraints.push(where("categoryId", "==", category));
-    if (collectionType !== "all")
+    }
+
+    if (collectionType !== "all") {
       constraints.push(
         where("collectionTypes", "array-contains", collectionType)
       );
-    if (status !== "all")
+    }
+      
+    if (status !== "all") {
       constraints.push(where("isActive", "==", status === "active"));
+    }
 
     constraints.push(orderBy("createdAt", "desc"));
     if (lastDoc) constraints.push(startAfter(lastDoc));

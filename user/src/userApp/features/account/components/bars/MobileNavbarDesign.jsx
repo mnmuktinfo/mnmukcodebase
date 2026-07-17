@@ -24,7 +24,6 @@ const MobileNavbar = ({ cartCount = 0, promoData, onCartClick }) => {
   const { user } = useAuth();
 
   const isAccountPage = location.pathname.startsWith("/user");
-
   const activeMenuItems = isAccountPage ? accountMenuData : categoryMenuItems;
 
   useEffect(() => {
@@ -33,7 +32,6 @@ const MobileNavbar = ({ cartCount = 0, promoData, onCartClick }) => {
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -46,29 +44,27 @@ const MobileNavbar = ({ cartCount = 0, promoData, onCartClick }) => {
     else setLoginOpen(true);
   };
 
+  // Theming: Matched to Desktop (Black default, Pink on hover)
   const iconBase =
-    "transition-all duration-300 hover:text-[#d4af37] text-gray-800";
+    "transition-colors duration-300 hover:text-[#e91e8b] text-gray-800";
 
   const iconWrapper = "relative p-1 flex items-center justify-center";
 
   const badge =
-    "absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] px-[4px] rounded-full bg-black text-white text-[9px] font-semibold flex items-center justify-center";
+    "absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] px-[4px] rounded-full bg-black text-white text-[9px] font-semibold flex items-center justify-center shadow-sm";
 
   return (
     <>
-      {/* HEADER */}
-
       <header
         className={`md:hidden fixed top-0 left-0 w-full z-[100] transition-all duration-300 ${
           scrolled
-            ? "bg-white/90 backdrop-blur-lg border-b border-gray-100"
+            ? "bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm"
             : "bg-white border-b border-gray-100"
         }`}>
-        {/* PROMO */}
-
+        {/* PROMO BAR (Black to Pink Gradient) */}
         {promoData?.length > 0 && (
           <div
-            className={`overflow-hidden bg-gradient-to-r from-[#da127d] to-[#e91e8b] text-white transition-all duration-500 ${
+            className={`overflow-hidden bg-gradient-to-r from-[#000000] via-[#e91e8b] to-[#da127d] text-white font-medium transition-all duration-500 ${
               scrolled ? "max-h-0 opacity-0" : "max-h-[38px] opacity-100"
             }`}>
             <PromotionalNavbar items={promoData} interval={4000} />
@@ -76,46 +72,46 @@ const MobileNavbar = ({ cartCount = 0, promoData, onCartClick }) => {
         )}
 
         {/* NAVBAR */}
-
         <div className="flex items-center justify-between h-[62px] px-4">
-          {/* MENU */}
-
-          <button
-            onClick={() => setMenuOpen(true)}
-            className="w-8 h-8 flex flex-col justify-center gap-[5px]">
-            <span className="h-[1px] w-6 bg-black" />
-            <span className="h-[1px] w-6 bg-black" />
-            <span className="h-[1px] w-6 bg-black" />
-          </button>
-
-          {/* LOGO */}
-
-          <div
-            onClick={() => navigate("/")}
-            className="cursor-pointer active:scale-95 transition">
-            <img
-              src={IMAGES.brand.logo}
-              alt="logo"
-              className="h-7 object-contain"
-            />
+          {/* 1. LEFT: MENU */}
+          <div className="flex-1 flex items-center justify-start">
+            <button
+              onClick={() => setMenuOpen(true)}
+              className="p-1 -ml-1 flex flex-col justify-center gap-[5px] active:scale-95 transition-transform"
+              aria-label="Open Menu">
+              <span className="h-[2px] w-5 bg-black rounded-full" />
+              <span className="h-[2px] w-5 bg-black rounded-full" />
+              <span className="h-[2px] w-5 bg-black rounded-full" />
+            </button>
           </div>
 
-          {/* RIGHT ICONS */}
+          {/* 2. CENTER: LOGO */}
+          <div className="flex-1 flex items-center justify-center">
+            <div
+              onClick={() => navigate("/")}
+              className="cursor-pointer active:scale-95 transition-transform">
+              <img
+                src={IMAGES.brand.logo}
+                alt="logo"
+                className="h-6 object-contain"
+              />
+            </div>
+          </div>
 
-          <div className="flex items-center gap-5">
-            {/* USER */}
-
+          {/* 3. RIGHT: ICONS */}
+          <div className="flex-1 flex items-center justify-end gap-3 sm:gap-4">
+            {/* USER (Original GoldUserIcon) */}
             <button
               onClick={() => handleProtectedRoute("/user/profile")}
-              className={`${iconWrapper} ${iconBase}`}>
+              className={`${iconWrapper} ${iconBase}`}
+              aria-label="User Profile">
               <GoldUserIcon className="w-[18px] h-[18px]" />
             </button>
-
-            {/* SEARCH */}
-
+            {/* SEARCH
             <button
               onClick={() => navigate("/search")}
-              className={`${iconWrapper} ${iconBase}`}>
+              className={`${iconWrapper} ${iconBase}`}
+              aria-label="Search">
               <svg
                 width={ICON_SIZE}
                 height={ICON_SIZE}
@@ -126,13 +122,12 @@ const MobileNavbar = ({ cartCount = 0, promoData, onCartClick }) => {
                 <circle cx="11" cy="11" r="7" />
                 <path d="M21 21l-4.3-4.3" />
               </svg>
-            </button>
-
+            </button> */}
             {/* CART */}
-
             <button
               onClick={onCartClick}
-              className={`${iconWrapper} ${iconBase}`}>
+              className={`${iconWrapper} ${iconBase}`}
+              aria-label="Shopping Cart">
               <svg
                 width={ICON_SIZE}
                 height={ICON_SIZE}
@@ -142,10 +137,9 @@ const MobileNavbar = ({ cartCount = 0, promoData, onCartClick }) => {
                 strokeWidth="1.5">
                 <path d="M6 6h15l-1.5 9h-12z" />
                 <path d="M6 6l-2-3H2" />
-                <circle cx="9" cy="20" r="1" />
-                <circle cx="18" cy="20" r="1" />
+                <circle cx="9" cy="20" r="1.5" />
+                <circle cx="18" cy="20" r="1.5" />
               </svg>
-
               {cartCount > 0 && (
                 <span className={badge}>
                   {cartCount > 9 ? "9+" : cartCount}
@@ -156,6 +150,7 @@ const MobileNavbar = ({ cartCount = 0, promoData, onCartClick }) => {
         </div>
       </header>
 
+      {/* MODALS & DROPDOWNS */}
       <LoginPopup isOpen={loginOpen} onClose={() => setLoginOpen(false)} />
 
       <NavbarDropdown

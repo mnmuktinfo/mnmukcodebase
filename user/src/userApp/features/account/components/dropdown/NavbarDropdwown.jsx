@@ -192,7 +192,7 @@ const NavbarDropdown = ({ isOpen, onClose, menuItems = [] }) => {
           <DrawerItem
             icon={HelpCircle}
             label="Customer Care"
-            onClick={() => go("/contact-us")}
+            onClick={() => go("/pages/contact-us")}
             hoverColor="gray-100"
           />
           <DrawerItem
