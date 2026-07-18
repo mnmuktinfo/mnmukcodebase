@@ -1,0 +1,10 @@
+User-agent: *
+
+Allow: /
+
+# Block unnecessary files/folders (optional)
+Disallow: /admin/
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://mnmukt.com/sitemap.xml
