@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
+  <channel>
+
+    <title>Mnmukt</title>
+    <link>https://www.mnmukt.com</link>
+    <description>Mnmukt Women's Fashion Collection</description>
+
+    <item>
+        <g:id>MNM-001</g:id>
+        <g:title>Women's Floral Co-ord Set</g:title>
+        <g:description>Premium floral co-ord set designed for comfort and everyday style.</g:description>
+        <g:link>https://www.mnmukt.com/products/womens-floral-co-ord-set</g:link>
+        <g:image_link>https://www.mnmukt.com/images/mnm-001.jpg</g:image_link>
+        <g:video_link>https://www.mnmukt.com/videos/mnm-001.mp4</g:video_link>
+        <g:availability>in_stock</g:availability>
+        <g:condition>new</g:condition>
+        <g:price>2499 INR</g:price>
+        <g:sale_price>2199 INR</g:sale_price>
+        <g:brand>Mnmukt</g:brand>
+        <g:identifier_exists>false</g:identifier_exists>
+        <g:google_product_category>2271</g:google_product_category>
+        <g:product_type>Women's Clothing > Co-ord Sets</g:product_type>
+        <g:gender>female</g:gender>
+        <g:age_group>adult</g:age_group>
+        <g:color>Yellow</g:color>
+        <g:size>M</g:size>
+        <g:material>Cotton Blend</g:material>
+    </item>
+
+    <item>
+        <g:id>MNM-002</g:id>
+        <g:title>Women's Black Party Dress</g:title>
+        <g:description>Elegant black party dress with modern styling.</g:description>
+        <g:link>https://www.mnmukt.com/products/womens-black-party-dress</g:link>
+        <g:image_link>https://www.mnmukt.com/images/mnm-002.jpg</g:image_link>
+        <g:video_link>https://www.mnmukt.com/videos/mnm-002.mp4</g:video_link>
+        <g:availability>in_stock</g:availability>
+        <g:condition>new</g:condition>
+        <g:price>2899 INR</g:price>
+        <g:sale_price>2499 INR</g:sale_price>
+        <g:brand>Mnmukt</g:brand>
+        <g:identifier_exists>false</g:identifier_exists>
+        <g:google_product_category>2271</g:google_product_category>
+        <g:product_type>Dresses</g:product_type>
+        <g:gender>female</g:gender>
+        <g:age_group>adult</g:age_group>
+        <g:color>Black</g:color>
+        <g:size>M</g:size>
+        <g:material>Rayon</g:material>
+    </item>
+
+    <item>
+        <g:id>MNM-003</g:id>
+        <g:title>Women's Cotton Kurta</g:title>
+        <g:description>Soft cotton kurta suitable for office and casual wear.</g:description>
+        <g:link>https://www.mnmukt.com/products/womens-cotton-kurta</g:link>
+        <g:image_link>https://www.mnmukt.com/images/mnm-003.jpg</g:image_link>
+        <g:video_link>https://www.mnmukt.com/videos/mnm-003.mp4</g:video_link>
+        <g:availability>in_stock</g:availability>
+        <g:condition>new</g:condition>
+        <g:price>1799 INR</g:price>
+        <g:sale_price>1499 INR</g:sale_price>
+        <g:brand>Mnmukt</g:brand>
+        <g:identifier_exists>false</g:identifier_exists>
+        <g:google_product_category>2271</g:google_product_category>
+        <g:product_type>Kurtas</g:product_type>
+        <g:gender>female</g:gender>
+        <g:age_group>adult</g:age_group>
+        <g:color>Ivory</g:color>
+        <g:size>M</g:size>
+        <g:material>Cotton</g:material>
+    </item>
+
+    <item>
+        <g:id>MNM-004</g:id>
+        <g:title>Women's Printed Shirt</g:title>
+        <g:description>Modern printed shirt with breathable fabric.</g:description>
+        <g:link>https://www.mnmukt.com/products/womens-printed-shirt</g:link>
+        <g:image_link>https://www.mnmukt.com/images/mnm-004.jpg</g:image_link>
+        <g:video_link>https://www.mnmukt.com/videos/mnm-004.mp4</g:video_link>
+        <g:availability>in_stock</g:availability>
+        <g:condition>new</g:condition>
+        <g:price>1599 INR</g:price>
+        <g:brand>Mnmukt</g:brand>
+        <g:identifier_exists>false</g:identifier_exists>
+        <g:google_product_category>2271</g:google_product_category>
+        <g:product_type>Shirts</g:product_type>
+        <g:gender>female</g:gender>
+        <g:age_group>adult</g:age_group>
+        <g:color>Blue</g:color>
+        <g:size>M</g:size>
+        <g:material>Cotton</g:material>
+    </item>
+
+    <item>
+        <g:id>MNM-005</g:id>
+        <g:title>Women's Midi Dress</g:title>
+        <g:description>Comfortable midi dress for daily wear.</g:description>
+        <g:link>https://www.mnmukt.com/products/womens-midi-dress</g:link>
+        <g:image_link>https://www.mnmukt.com/images/mnm-005.jpg</g:image_link>
+        <g:video_link>https://www.mnmukt.com/videos/mnm-005.mp4</g:video_link>
+        <g:availability>in_stock</g:availability>
+        <g:condition>new</g:condition>
+        <g:price>2399 INR</g:price>
+        <g:sale_price>1999 INR</g:sale_price>
+        <g:brand>Mnmukt</g:brand>
+        <g:identifier_exists>false</g:identifier_exists>
+        <g:google_product_category>2271</g:google_product_category>
+        <g:product_type>Dresses</g:product_type>
+        <g:gender>female</g:gender>
+        <g:age_group>adult</g:age_group>
+        <g:color>Green</g:color>
+        <g:size>M</g:size>
+        <g:material>Viscose</g:material>
+    </item>
+
+    <item>
+        <g:id>MNM-006</g:id>
+        <g:title>Women's Palazzo Set</g:title>
+        <g:description>Stylish palazzo set with premium comfort.</g:description>
+        <g:link>https://www.mnmukt.com/products/womens-palazzo-set</g:link>
+        <g:image_link>https://www.mnmukt.com/images/mnm-006.jpg</g:image_link>
+        <g:video_link>https://www.mnmukt.com/videos/mnm-006.mp4</g:video_link>
+        <g:availability>in_stock</g:availability>
+        <g:condition>new</g:condition>
+        <g:price>2599 INR</g:price>
+        <g:sale_price>2199 INR</g:sale_price>
+        <g:brand>Mnmukt</g:brand>
+        <g:identifier_exists>false</g:identifier_exists>
+        <g:google_product_category>2271</g:google_product_category>
+        <g:product_type>Palazzo Sets</g:product_type>
+        <g:gender>female</g:gender>
+        <g:age_group>adult</g:age_group>
+        <g:color>Rust</g:color>
+        <g:size>M</g:size>
+        <g:material>Cotton</g:material>
+    </item>
+
+    <item>
+        <g:id>MNM-007</g:id>
+        <g:title>Women's Festive Saree</g:title>
+        <g:description>Elegant saree suitable for festive occasions.</g:description>
+        <g:link>https://www.mnmukt.com/products/womens-festive-saree</g:link>
+        <g:image_link>https://www.mnmukt.com/images/mnm-007.jpg</g:image_link>
+        <g:video_link>https://www.mnmukt.com/videos/mnm-007.mp4</g:video_link>
+        <g:availability>in_stock</g:availability>
+        <g:condition>new</g:condition>
+        <g:price>3999 INR</g:price>
+        <g:sale_price>3499 INR</g:sale_price>
+        <g:brand>Mnmukt</g:brand>
+        <g:identifier_exists>false</g:identifier_exists>
+        <g:google_product_category>2271</g:google_product_category>
+        <g:product_type>Sarees</g:product_type>
+        <g:gender>female</g:gender>
+        <g:age_group>adult</g:age_group>
+        <g:color>Maroon</g:color>
+        <g:size>Free Size</g:size>
+        <g:material>Silk Blend</g:material>
+    </item>
+
+    <item>
+        <g:id>MNM-008</g:id>
+        <g:title>Women's Casual Top</g:title>
+        <g:description>Comfortable casual top with modern styling.</g:description>
+        <g:link>https://www.mnmukt.com/products/womens-casual-top</g:link>
+        <g:image_link>https://www.mnmukt.com/images/mnm-008.jpg</g:image_link>
+        <g:video_link>https://www.mnmukt.com/videos/mnm-008.mp4</g:video_link>
+        <g:availability>in_stock</g:availability>
+        <g:condition>new</g:condition>
+        <g:price>1399 INR</g:price>
+        <g:sale_price>1199 INR</g:sale_price>
+        <g:brand>Mnmukt</g:brand>
+        <g:identifier_exists>false</g:identifier_exists>
+        <g:google_product_category>2271</g:google_product_category>
+        <g:product_type>Tops</g:product_type>
+        <g:gender>female</g:gender>
+        <g:age_group>adult</g:age_group>
+        <g:color>White</g:color>
+        <g:size>M</g:size>
+        <g:material>Cotton</g:material>
+    </item>
+
+    <item>
+        <g:id>MNM-009</g:id>
+        <g:title>Women's Ethnic Kurta Set</g:title>
+        <g:description>Elegant ethnic kurta set for festive and casual wear.</g:description>
+        <g:link>https://www.mnmukt.com/products/womens-ethnic-kurta-set</g:link>
+        <g:image_link>https://www.mnmukt.com/images/mnm-009.jpg</g:image_link>
+        <g:video_link>https://www.mnmukt.com/videos/mnm-009.mp4</g:video_link>
+        <g:availability>in_stock</g:availability>
+        <g:condition>new</g:condition>
+        <g:price>2799 INR</g:price>
+        <g:sale_price>2399 INR</g:sale_price>
+        <g:brand>Mnmukt</g:brand>
+        <g:identifier_exists>false</g:identifier_exists>
+        <g:google_product_category>2271</g:google_product_category>
+        <g:product_type>Kurta Sets</g:product_type>
+        <g:gender>female</g:gender>
+        <g:age_group>adult</g:age_group>
+        <g:color>Pink</g:color>
+        <g:size>M</g:size>
+        <g:material>Rayon</g:material>
+    </item>
+
+    <item>
+        <g:id>MNM-010</g:id>
+        <g:title>Women's Summer Co-ord Set</g:title>
+        <g:description>Lightweight summer co-ord set designed for all-day comfort.</g:description>
+        <g:link>https://www.mnmukt.com/products/womens-summer-co-ord-set</g:link>
+        <g:image_link>https://www.mnmukt.com/images/mnm-010.jpg</g:image_link>
+        <g:video_link>https://www.mnmukt.com/videos/mnm-010.mp4</g:video_link>
+        <g:availability>in_stock</g:availability>
+        <g:condition>new</g:condition>
+        <g:price>2699 INR</g:price>
+        <g:sale_price>2299 INR</g:sale_price>
+        <g:brand>Mnmukt</g:brand>
+        <g:identifier_exists>false</g:identifier_exists>
+        <g:google_product_category>2271</g:google_product_category>
+        <g:product_type>Co-ord Sets</g:product_type>
+        <g:gender>female</g:gender>
+        <g:age_group>adult</g:age_group>
+        <g:color>Beige</g:color>
+        <g:size>M</g:size>
+        <g:material>Cotton Blend</g:material>
+    </item>
+
+  </channel>
+</rss>
